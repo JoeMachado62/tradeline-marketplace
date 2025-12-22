@@ -114,12 +114,10 @@ export class TradelineSupplyAPI {
 
         return {
             ...item,
-            // Sanitize price (it sometimes contains WooCommerce HTML)
+            // Sanitize numeric fields that might contain HTML/Currency strings
             price: cleanPrice(item.price),
             stock: cleanStock(item.stock),
-            // Ensure other fields are strings if they contain HTML
-            // bank_name usually plain text, but good to be safe? 
-            // We assume others are fine for now.
+            credit_limit: cleanPrice(item.credit_limit), // Fix for $NaN
         };
       });
 
