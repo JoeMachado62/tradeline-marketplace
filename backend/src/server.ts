@@ -1,3 +1,4 @@
+console.log("Starting server process...");
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -5,6 +6,8 @@ import morgan from "morgan";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { config } from "./config";
+
+console.log("Config loaded, environment:", config.env);
 
 const app: Express = express();
 

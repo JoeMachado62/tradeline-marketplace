@@ -1,0 +1,39 @@
+﻿[dotenv@17.2.3] injecting env (3) from .env -- tip: ≡ƒöä add secrets lifecycle management: https://dotenvx.com/ops
+node.exe : D:\Credit Services US\tradelinesupply-list-php\backend\node_modules
+\@prisma\client\src\runtime\utils\validatePrismaClientOptions.ts:229
+At C:\Users\joema\AppData\Roaming\npm\railway.ps1:24 char:5
++     & "node$exe"  "$basedir/node_modules/@railway/cli/bin/railway.js" ...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\Credit Servi...tOptions.ts:22 
+   9:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    throw new PrismaClientConstructorValidationError(
+          ^
+
+
+PrismaClientConstructorValidationError: Using engine type "client" requires 
+either "adapter" or "accelerateUrl" to be provided to PrismaClient 
+constructor.
+Read more at https://pris.ly/d/client-constructor
+    at validateDependentOptions (D:\Credit Services US\tradelinesupply-list-ph
+p\backend\node_modules\@prisma\client\src\runtime\utils\validatePrismaClientOp
+tions.ts:229:11)
+    at validatePrismaClientOptions (D:\Credit Services US\tradelinesupply-list
+-php\backend\node_modules\@prisma\client\src\runtime\utils\validatePrismaClien
+tOptions.ts:246:3)
+    at new t (D:\Credit Services US\tradelinesupply-list-php\backend\node_modu
+les\@prisma\client\src\runtime\getPrismaClient.ts:281:7)
+    at Function.getInstance (D:\Credit Services 
+US\tradelinesupply-list-php\backend\src\services\Database.ts:11:27)
+    at prisma (D:\Credit Services 
+US\tradelinesupply-list-php\backend\src\services\Database.ts:91:32)
+    at Object.<anonymous> (D:\Credit Services 
+US\tradelinesupply-list-php\backend\src\services\Database.ts:92:16)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object.transformer (D:\Credit Services US\tradelinesupply-list-php\back
+end\node_modules\tsx\dist\register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+
+Node.js v22.15.0

@@ -8,12 +8,13 @@ class Database {
 
   public static getInstance(): PrismaClient {
     if (!Database.instance) {
+      console.log("Initializing PrismaClient instance...");
       Database.instance = new PrismaClient({
         log: config.env === 'development'
           ? ['query', 'info', 'warn', 'error']
           : ['error'],
-        // errorFormat: config.env === 'development' ? 'pretty' : 'minimal', // Note: removed errorFormat as it might differ by prisma version
       });
+      console.log("PrismaClient instance initialized successfully.");
 
       // Middleware to convert cents to dollars for display
       // Note: In newer Prisma versions, $use is deprecated in favor of extensions.
