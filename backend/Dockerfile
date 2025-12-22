@@ -15,13 +15,16 @@ COPY prisma ./prisma/
 RUN npm ci
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN echo "=== Generating Prisma client ===" && npx prisma generate && echo "=== Prisma client generated ==="
 
 # Copy source code
 COPY . .
 
 # Build TypeScript - show any errors
-RUN echo "Building TypeScript..." && npm run build && echo "Build completed successfully"
+RUN echo "=== Building TypeScript ===" && npm run build 2>&1 && echo "=== TypeScript build complete ==="
+
+# List dist directory to verify build output
+RUN echo "=== Contents of dist/ ===" && ls -la dist/ && echo "=== End dist contents ==="
 
 # Verify dist/server.js exists
 RUN test -f dist/server.js && echo "✅ dist/server.js exists" || (echo "❌ dist/server.js NOT FOUND" && exit 1)
@@ -32,5 +35,5 @@ RUN npm prune --production
 # Expose port
 EXPOSE 3000
 
-# Use a shell script to run migrations and start server with better error output
-CMD ["sh", "-c", "echo '=== Starting application ===' && npx prisma migrate deploy && echo '=== Migrations complete, starting server ===' && node dist/server.js"]
+# Start server with explicit output
+CMD sh -c 'echo "=== Container starting ===" && echo "=== Running migrations ===" && npx prisma migrate deploy 2>&1 && echo "=== Migrations done ===" && echo "=== Starting Node.js server ===" && exec node dist/server.js 2>&1'
