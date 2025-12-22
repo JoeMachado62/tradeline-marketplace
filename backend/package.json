@@ -13,7 +13,8 @@
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "create-broker": "node dist/scripts/create_broker.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
