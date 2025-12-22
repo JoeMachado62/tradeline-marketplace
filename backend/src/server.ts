@@ -38,6 +38,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Registration of routes
+import adminRoutes from "./routes/admin";
+app.use("/api/admin", adminRoutes);
+
 import publicRoutes from "./routes/public";
 import brokerRoutes from "./routes/brokers";
 import orderRoutes from "./routes/orders";
