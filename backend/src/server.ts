@@ -59,6 +59,36 @@ app.get("/health", (_req: Request, res: Response) => {
   });
 });
 
+// Root endpoint - Status Page
+app.get("/", (_req: Request, res: Response) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Tradeline Marketplace API</title>
+        <style>
+          body { font-family: system-ui, sans-serif; padding: 40px; text-align: center; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 30px; border-radius: 12px; }
+          .status { color: #10b981; font-weight: bold; font-size: 1.2em; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🚀 Tradeline Marketplace API</h1>
+          <p>The backend services are <span class="status">ONLINE</span>.</p>
+          <p>This is the engine powering your widget. It does not have a user interface itself.</p>
+          <hr>
+          <p style="font-size: 0.9em; color: #666;">
+            Deployment: ${config.env}<br>
+            Gemini AI: Enabled<br>
+            Stripe Payments: Ready
+          </p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
 // API info endpoint
 app.get("/api", (_req: Request, res: Response) => {
   res.json({

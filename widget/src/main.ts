@@ -18,9 +18,23 @@ const initWidget = async (config: WidgetConfig, selector: string = '#app') => {
 }
 
 // Check for global config or auto-init
-const globalConfig = (window as any).TLM_WIDGET_CONFIG
-if (globalConfig) {
-  initWidget(globalConfig)
+const globalConfig = (window as any).TL_WIDGET_CONFIG;
+
+// Development Mode Auto-Init
+if (import.meta.env.DEV && !globalConfig) {
+  const devUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+  console.log("🔧 Development Mode: Connecting to", devUrl);
+  
+  initWidget({
+    apiKey: "test_dev_key",
+    apiUrl: devUrl,
+    theme: {
+      primaryColor: "#2563eb",
+      secondaryColor: "#1e40af"
+    }
+  });
+} else if (globalConfig) {
+  initWidget(globalConfig);
 }
 
 // Export for manual initialization
