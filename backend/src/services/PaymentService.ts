@@ -3,6 +3,7 @@ import { config } from "../config";
 import { getOrderService } from "./OrderService";
 import { getPricingEngine, PricingEngine } from "./PricingEngine";
 import { prisma } from "./Database";
+import { Tradeline } from "../types";
 
 export class PaymentService {
   private stripe: any;
@@ -39,11 +40,9 @@ export class PaymentService {
       data.broker_id
     );
 
-    // Get tradeline details for line items
-    const pricing = await this.pricingEngine.getPricingForBroker(
-      data.broker_id
-    );
-    const pricingMap = new Map(pricing.map((p) => [p.card_id, p]));
+    // Get full tradeline details for metadata (like credit_limit) which might be missing in calculation items
+    const allTradelines = await this.pricingEngine.getMarketplaceTradelines();
+    const metadataMap = new Map<string, Tradeline>(allTradelines.map((t) => [t.card_id, t]));
 
     // Create order in our database first (pending status)
     const order = await this.orderService.createOrder({
@@ -56,16 +55,16 @@ export class PaymentService {
     // Prepare line items for Stripe
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
       calculation.items.map((item) => {
-        const tradeline = pricingMap.get(item.card_id);
-        if (!tradeline) {
+        const tradelineMetadata = metadataMap.get(item.card_id);
+        if (!tradelineMetadata) {
            throw new Error(`Tradeline ${item.card_id} not found in current pricing`);
         }
         return {
           price_data: {
             currency: "usd",
             product_data: {
-              name: tradeline.bank_name,
-              description: `Tradeline - Credit Limit: $${tradeline.credit_limit.toLocaleString()}`,
+              name: tradelineMetadata.bank_name,
+              description: `Tradeline - Credit Limit: $${tradelineMetadata.credit_limit.toLocaleString()}`,
               metadata: {
                 card_id: item.card_id,
               },

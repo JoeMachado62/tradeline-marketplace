@@ -114,7 +114,7 @@ export const authenticateAdmin = async (
  */
 export const optionalBrokerAuth = async (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) => {
   try {

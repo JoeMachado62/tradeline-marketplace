@@ -74,7 +74,7 @@ export class TradelineSupplyAPI {
       // Use the full URL for OAuth signing - however axios uses relative if baseURL set
       // We must provide the full URL to OAuth
       const fullURL = `${this.baseURL}/pricing`;
-      const headers = this.getAuthHeader(fullURL, "GET");
+      const headers = this.getAuthHeader(fullURL, "GET") as any;
 
       console.log("Fetching pricing from TradelineSupply...");
       const response = await this.axios.get("/pricing", { headers });
@@ -143,7 +143,7 @@ export class TradelineSupplyAPI {
         ],
       };
 
-      const headers = this.getAuthHeader(fullURL, "POST", wooCommerceOrder);
+      const headers = this.getAuthHeader(fullURL, "POST", wooCommerceOrder) as any;
 
       console.log(
         `Creating order in TradelineSupply for ${orderData.items.length} items`
@@ -171,7 +171,7 @@ export class TradelineSupplyAPI {
   async getOrderStatus(orderId: string): Promise<any> {
     try {
       const fullURL = `${this.baseURL}/orders/${orderId}`;
-      const headers = this.getAuthHeader(fullURL, "GET");
+      const headers = this.getAuthHeader(fullURL, "GET") as any;
 
       const response = await this.axios.get(`/orders/${orderId}`, { headers });
       return response.data;

@@ -1,7 +1,8 @@
 import { prisma } from "./Database";
 import { getTradelineSupplyAPI } from "./TradelineSupplyAPI";
 import { getCacheService } from "./Cache";
-import { Broker, Tradeline } from "@prisma/client";
+import { Broker } from "@prisma/client";
+import { Tradeline, TradelineWithPricing } from "../types";
 
 // Allow strict filtering
 export interface PricingOptions {
@@ -9,13 +10,7 @@ export interface PricingOptions {
   items?: Array<{ card_id: string; quantity: number }>;
 }
 
-// Extended Tradeline type with pricing
-export interface TradelineWithPricing extends Tradeline {
-  base_price: number;
-  broker_revenue_share: number;
-  broker_markup: number;
-  customer_price: number;
-}
+
 
 export class PricingEngine {
   private api = getTradelineSupplyAPI();
@@ -23,6 +18,26 @@ export class PricingEngine {
 
   constructor() {
     //
+  }
+
+  /**
+   * Invalidate pricing cache for a broker
+   */
+  async invalidateCache(_brokerId: string): Promise<void> {
+    // Invalidate main tradelines cache just in case (though it's global)
+    // Realistically we might want to invalidate specific broker calculations if we cached them.
+    // For now, this is a placeholder or can clear specific broker keys if we add them.
+    // As per BrokerService requirement, we just need the method to exist.
+    // We could clear the global tradelines cache if we wanted to force a refresh, but that affects everyone.
+    // Let's just return for now as the current caching strategy is global 'tradelines_all'.
+    return Promise.resolve();
+  }
+
+  /**
+   * Public accessor for raw tradelines (for metadata lookups)
+   */
+  async getMarketplaceTradelines(): Promise<Tradeline[]> {
+    return this.getTradelines();
   }
 
   // Utility to handle cents conversion safely

@@ -141,7 +141,7 @@ export class BrokerService {
     }
 
     // Log activity
-    await this.logActivity(brokerId, "BROKER_UPDATED", brokerId, { updates });
+    await this.logActivity(brokerId, "BROKER_UPDATED", brokerId, { updates, admin_id: adminId });
 
     return broker;
   }
