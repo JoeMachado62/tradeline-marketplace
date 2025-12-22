@@ -4,15 +4,15 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts",
-    "build": "prisma generate && tsc",
-    "start": "npx prisma migrate deploy && node dist/server.js",
+    "build": "prisma generate --schema=./prisma/schema.prisma && tsc",
+    "start": "npx prisma migrate deploy --schema=./prisma/schema.prisma && node dist/server.js",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "migrate": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
     "prisma:studio": "prisma studio",
     "create-broker": "node dist/scripts/create_broker.js"
   },
