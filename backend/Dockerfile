@@ -1,5 +1,8 @@
-# Base image
-FROM node:20-alpine
+# Use Debian-based image instead of Alpine for better Prisma compatibility
+FROM node:20-slim
+
+# Install OpenSSL (required by Prisma)
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Working directory
 WORKDIR /app
