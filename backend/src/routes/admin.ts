@@ -13,16 +13,21 @@ const authService = getAuthService();
 const authenticateAdmin = async (req: Request, res: Response, next: any) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Missing authorization" });
+      res.status(401).json({ error: "Missing authorization" });
+      return;
     }
     const token = authHeader.substring(7);
     try {
-      const decoded = jwt.verify(token, config.jwt.secret) as any;
-      if (decoded.type !== "admin") return res.status(403).json({ error: "Admin access required" });
+      const decoded = jwt.verify(token, config.jwt.secret as string) as any;
+      if (decoded.type !== "admin") {
+        res.status(403).json({ error: "Admin access required" });
+        return;
+      }
       req.admin = decoded;
       next();
     } catch (err) {
-      return res.status(401).json({ error: "Invalid token" });
+      res.status(401).json({ error: "Invalid token" });
+      return;
     }
 };
 
@@ -59,7 +64,7 @@ router.post(
 router.get(
   "/dashboard",
   authenticateAdmin,
-  async (req: Request, res: Response) => {
+  async (_req: Request, res: Response) => {
     try {
         const stats = {
             brokers: await prisma.broker.count(),

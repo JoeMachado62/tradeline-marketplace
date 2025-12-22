@@ -9,8 +9,8 @@ export class AuthService {
    * Generate JWT token
    */
   private generateToken(payload: any, expiresIn?: string): string {
-    return jwt.sign(payload, config.jwt.secret, {
-      expiresIn: expiresIn || config.jwt.expiry,
+    return jwt.sign(payload, config.jwt.secret as string, {
+      expiresIn: (expiresIn || config.jwt.expiry) as string,
     });
   }
 
