@@ -5,7 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "echo '=== Container starting ===' && npx prisma migrate deploy && echo '=== Migrations done ===' && echo '=== Starting Node.js ===' && node dist/server.js",
+    "startCommand": "echo 'STEP 1: Container starting' && ls -la dist/ && echo 'STEP 2: Running migrations' && npx prisma migrate deploy && echo 'STEP 3: Starting server' && node dist/server.js 2>&1 || echo 'STEP 4: Server failed with exit code' $?",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
