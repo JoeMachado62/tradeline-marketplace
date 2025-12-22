@@ -26,5 +26,5 @@ RUN npm prune --production
 # Expose port
 EXPOSE 3000
 
-# Start command
-CMD ["npm", "start"]
+# Start command - run migrations first, then start server
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
