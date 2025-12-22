@@ -107,6 +107,63 @@ app.get("/api", (_req: Request, res: Response) => {
   });
 });
 
+// Temporary endpoint to create initial broker
+app.get("/api/admin/create-initial-broker", async (_req: Request, res: Response) => {
+  try {
+    const secret = _req.query.secret;
+    if (secret !== process.env.JWT_SECRET) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { getBrokerService } = await import("./services/BrokerService");
+    const brokerService = getBrokerService();
+    
+    // Create the broker
+    const result = await brokerService.createBroker({
+      name: "Joe Machado",
+      business_name: "EZWAI",
+      email: "joe@ezwai.com",
+      revenue_share_percent: 10,
+      notes: "Initial admin broker created via endpoint"
+    });
+
+    // Auto-approve
+    const { prisma } = await import("./services/Database");
+    
+    // Check if duplicate error was thrown or we need to handle it
+    // The service throws error if email exists. 
+    // If we are here, it worked.
+
+    await prisma.broker.update({
+      where: { id: result.broker.id },
+      data: { status: "ACTIVE" }
+    });
+
+    res.json({
+      message: "Broker created successfully",
+      broker: result.broker,
+      api_key: result.broker.api_key,
+      api_secret: result.api_secret
+    });
+
+  } catch (error: any) {
+    if (error.message.includes("already exists")) {
+       // Fetch existing to show key? No, that is insecure usually, but for this recovery op:
+       const { prisma } = await import("./services/Database");
+       const existing = await prisma.broker.findUnique({ where: { email: "joe@ezwai.com" } });
+       if (existing) {
+         return res.json({
+           message: "Broker already exists",
+           broker: existing,
+           api_key: existing.api_key,
+           note: "Secret cannot be retrieved for existing broker. You may need to reset it if lost."
+         });
+       }
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Error handling middleware (must be last)
 app.use((err: any, _req: Request, res: Response, _next: any) => {
   console.error("Error:", err);
