@@ -1,8 +1,8 @@
 import OAuth from "oauth-1.0a";
 import crypto from "crypto";
 import axios, { AxiosInstance, AxiosError } from "axios";
-import { Tradeline } from "@/types";
-import { config } from "@/config";
+import { Tradeline } from "../types";
+import { config } from "../config";
 
 export class TradelineSupplyAPI {
   private oauth: OAuth;

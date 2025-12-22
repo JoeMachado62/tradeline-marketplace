@@ -1,5 +1,5 @@
 import { TradelineSupplyAPI } from "../TradelineSupplyAPI";
-import { Tradeline } from "@/types";
+import { Tradeline } from "../../types";
 
 describe("TradelineSupplyAPI", () => {
   let api: TradelineSupplyAPI;
