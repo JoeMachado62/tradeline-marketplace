@@ -25,9 +25,8 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
-// Important: Stripe webhook needs the raw body for signature verification
-// This MUST be registered BEFORE express.json() for this specific path
-app.use("/api/orders/webhook/stripe", express.raw({ type: "application/json" }));
+// Important: Stripe webhook needs the raw body for verification
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 
 // General middleware
 app.use(compression());
@@ -41,12 +40,14 @@ import brokerRoutes from "./routes/brokers";
 import orderRoutes from "./routes/orders";
 import payoutRoutes from "./routes/payouts";
 import clientRoutes from "./routes/clients";
+import webhookRoutes from "./routes/webhook";
 
 app.use("/api/public", publicRoutes);
 app.use("/api/brokers", brokerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payouts", payoutRoutes);
 app.use("/api/clients", clientRoutes);
+app.use("/api/payments/webhook", webhookRoutes);
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
