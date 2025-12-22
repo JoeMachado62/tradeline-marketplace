@@ -112,7 +112,8 @@ app.get("/api/admin/create-initial-broker", async (_req: Request, res: Response)
   try {
     const secret = _req.query.secret;
     if (secret !== "temp-deployment-secret") {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
 
     const { getBrokerService } = await import("./services/BrokerService");
@@ -145,6 +146,7 @@ app.get("/api/admin/create-initial-broker", async (_req: Request, res: Response)
       api_key: result.broker.api_key,
       api_secret: result.api_secret
     });
+    return;
 
   } catch (error: any) {
     if (error.message.includes("already exists")) {
@@ -152,15 +154,17 @@ app.get("/api/admin/create-initial-broker", async (_req: Request, res: Response)
        const { prisma } = await import("./services/Database");
        const existing = await prisma.broker.findUnique({ where: { email: "joe@ezwai.com" } });
        if (existing) {
-         return res.json({
+         res.json({
            message: "Broker already exists",
            broker: existing,
            api_key: existing.api_key,
            note: "Secret cannot be retrieved for existing broker. You may need to reset it if lost."
          });
+         return;
        }
     }
     res.status(500).json({ error: error.message });
+    return;
   }
 });
 
