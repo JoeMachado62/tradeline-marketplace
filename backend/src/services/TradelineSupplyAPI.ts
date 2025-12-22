@@ -84,7 +84,46 @@ export class TradelineSupplyAPI {
       }
 
       console.log(`Received ${response.data.length} tradelines from API`);
-      return response.data as Tradeline[];
+
+      const cleanData = response.data.map((item: any) => {
+        // Helper to strip HTML and extract number from price
+        const cleanPrice = (val: any) => {
+             if (typeof val === 'number') return val;
+             if (typeof val === 'string') {
+                 // Remove tags
+                 const text = val.replace(/<[^>]*>?/gm, '');
+                 // Remove non-numeric chars except dot
+                 const num = text.replace(/[^0-9.]/g, '');
+                 return parseFloat(num) || 0;
+             }
+             return 0;
+        };
+
+        // Helper to extract stock number
+        const cleanStock = (val: any) => {
+            if (typeof val === 'number') return val;
+             if (typeof val === 'string') {
+                 // Remove tags if any
+                 const text = val.replace(/<[^>]*>?/gm, '');
+                 // Extract first number found
+                 const match = text.match(/\d+/);
+                 return match ? parseInt(match[0]) : 0;
+             }
+             return 0;
+        };
+
+        return {
+            ...item,
+            // Sanitize price (it sometimes contains WooCommerce HTML)
+            price: cleanPrice(item.price),
+            stock: cleanStock(item.stock),
+            // Ensure other fields are strings if they contain HTML
+            // bank_name usually plain text, but good to be safe? 
+            // We assume others are fine for now.
+        };
+      });
+
+      return cleanData as Tradeline[];
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
