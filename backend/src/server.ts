@@ -63,7 +63,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Admin Frontend Static Serving
-const adminPath = path.join(__dirname, '../../admin/dist');
+const adminPath = path.join(__dirname, '../admin-dist');
 console.log('Admin path:', adminPath);
 console.log('Admin path exists:', fs.existsSync(adminPath));
 
