@@ -60,15 +60,23 @@ app.use("/api/payments/webhook", webhookRoutes);
 // Note: admin routes (including login) are handled by adminRoutes above
 
 import path from 'path';
+import fs from 'fs';
 
-// ... (imports)
-
-// Admin Frontend Static Serving (Must be before API routes or handled carefully)
+// Admin Frontend Static Serving
 const adminPath = path.join(__dirname, '../../admin/dist');
-app.use('/admin', express.static(adminPath));
-app.get('/admin/{*path}', (_req: Request, res: Response) => {
-    res.sendFile(path.join(adminPath, 'index.html'));
-});
+console.log('Admin path:', adminPath);
+console.log('Admin path exists:', fs.existsSync(adminPath));
+
+if (fs.existsSync(adminPath)) {
+    app.use('/admin', express.static(adminPath));
+    app.get('/admin/{*path}', (_req: Request, res: Response) => {
+        res.sendFile(path.join(adminPath, 'index.html'));
+    });
+} else {
+    app.get('/admin', (_req: Request, res: Response) => {
+        res.status(503).send('Admin panel not available - dist folder not found at: ' + adminPath);
+    });
+}
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
