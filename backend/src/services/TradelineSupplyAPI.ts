@@ -121,10 +121,16 @@ export class TradelineSupplyAPI {
 
         return {
             ...item,
-            // Sanitize numeric fields that might contain HTML/Currency strings
-            price: cleanPrice(item.price),
             stock: cleanStock(item.stock),
-            credit_limit: cleanPrice(item.credit_limit),
+            credit_limit: (() => {
+                let limit = cleanPrice(item.credit_limit);
+                // Fix for reported issue: "36" prefix appearing on limits (e.g. 3,667,000 -> 67,000)
+                const s = limit.toString();
+                if (limit > 3000000 && s.startsWith('36') && s.length > 2) {
+                    limit = parseFloat(s.substring(2));
+                }
+                return limit;
+            })(),
         };
       });
 
