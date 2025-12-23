@@ -47,7 +47,6 @@ import orderRoutes from "./routes/orders";
 import payoutRoutes from "./routes/payouts";
 import clientRoutes from "./routes/clients";
 import webhookRoutes from "./routes/webhook";
-import adminAuthRoutes from "./routes/admin-auth";
 
 app.use("/api/public", publicRoutes);
 app.use("/api/brokers", brokerRoutes);
@@ -55,7 +54,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payouts", payoutRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/payments/webhook", webhookRoutes);
-app.use("/api/admin", adminAuthRoutes);
+// Note: admin routes (including login) are handled by adminRoutes above
 
 import path from 'path';
 
