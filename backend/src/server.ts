@@ -64,7 +64,7 @@ import path from 'path';
 // Admin Frontend Static Serving (Must be before API routes or handled carefully)
 const adminPath = path.join(__dirname, '../../admin/dist');
 app.use('/admin', express.static(adminPath));
-app.get('/admin/*', (_req: Request, res: Response) => {
+app.get('/admin/{*path}', (_req: Request, res: Response) => {
     res.sendFile(path.join(adminPath, 'index.html'));
 });
 
