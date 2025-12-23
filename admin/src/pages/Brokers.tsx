@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Copy, Eye, X } from 'lucide-react';
+import { Plus, Copy, Eye, X, Edit, RefreshCw } from 'lucide-react';
 import api from '../services/api';
 
 interface BrokerFormData {
@@ -9,6 +9,20 @@ interface BrokerFormData {
   phone: string;
   website: string;
   revenue_share: number;
+  status?: string;
+}
+
+interface Broker {
+  id: string;
+  name: string;
+  email: string;
+  business_name: string;
+  phone: string;
+  website: string;
+  revenue_share_percent: number;
+  status: string;
+  api_key: string;
+  created_at: string;
 }
 
 const initialFormData: BrokerFormData = {
@@ -21,15 +35,19 @@ const initialFormData: BrokerFormData = {
 };
 
 const Brokers: React.FC = () => {
-  const [brokers, setBrokers] = useState<any[]>([]);
+  const [brokers, setBrokers] = useState<Broker[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedBroker, setSelectedBroker] = useState<any>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedBroker, setSelectedBroker] = useState<Broker | null>(null);
   const [newBroker, setNewBroker] = useState<BrokerFormData>(initialFormData);
+  const [editBroker, setEditBroker] = useState<BrokerFormData>(initialFormData);
   const [creating, setCreating] = useState(false);
-  const [createdBroker, setCreatedBroker] = useState<any>(null);
+  const [updating, setUpdating] = useState(false);
+  const [createdBroker, setCreatedBroker] = useState<Broker | null>(null);
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
+  const [newSecret, setNewSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const fetchBrokers = async () => {
@@ -60,13 +78,50 @@ const Brokers: React.FC = () => {
       if (data.success) {
         setCreatedBroker(data.broker);
         setCreatedSecret(data.api_secret);
-        fetchBrokers(); // Refresh list
+        fetchBrokers();
       }
     } catch (error: any) {
       console.error(error);
       alert(error.response?.data?.error || 'Failed to create broker');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBroker) return;
+    
+    setUpdating(true);
+    try {
+      const { data } = await api.put(`/admin/brokers/${selectedBroker.id}`, editBroker);
+      if (data.success) {
+        fetchBrokers();
+        setShowEditModal(false);
+        alert('Broker updated successfully!');
+      }
+    } catch (error: any) {
+      console.error(error);
+      alert(error.response?.data?.error || 'Failed to update broker');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleResetSecret = async () => {
+    if (!selectedBroker) return;
+    if (!confirm('Are you sure you want to reset the API secret? The broker will need to update their configuration.')) {
+      return;
+    }
+    
+    try {
+      const { data } = await api.post(`/admin/brokers/${selectedBroker.id}/reset-secret`);
+      if (data.success) {
+        setNewSecret(data.api_secret);
+      }
+    } catch (error: any) {
+      console.error(error);
+      alert(error.response?.data?.error || 'Failed to reset secret');
     }
   };
 
@@ -89,13 +144,29 @@ const Brokers: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const openViewModal = (broker: any) => {
+  const openViewModal = (broker: Broker) => {
     setSelectedBroker(broker);
+    setNewSecret(null);
     setShowViewModal(true);
   };
 
+  const openEditModal = (broker: Broker) => {
+    setSelectedBroker(broker);
+    setEditBroker({
+      name: broker.name,
+      email: broker.email,
+      business_name: broker.business_name || '',
+      phone: broker.phone || '',
+      website: broker.website || '',
+      revenue_share: broker.revenue_share_percent,
+      status: broker.status
+    });
+    setNewSecret(null);
+    setShowEditModal(true);
+  };
+
   const closeCreateModal = () => {
-    setShowModal(false);
+    setShowCreateModal(false);
     setCreatedSecret(null);
     setCreatedBroker(null);
     setNewBroker(initialFormData);
@@ -106,7 +177,7 @@ const Brokers: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-[#051b41]">Broker Management</h1>
         <button 
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 bg-[#051b41] text-white px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -134,7 +205,7 @@ const Brokers: React.FC = () => {
               ) : brokers.length === 0 ? (
                 <tr><td colSpan={7} className="text-center py-8">No brokers found.</td></tr>
               ) : (
-                brokers.map((broker: any) => (
+                brokers.map((broker) => (
                   <tr key={broker.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 font-medium text-[#051b41]">{broker.name}</td>
                     <td className="px-6 py-3">{broker.business_name || '-'}</td>
@@ -145,18 +216,26 @@ const Brokers: React.FC = () => {
                          <span className={`px-2 py-1 rounded text-xs font-bold ${
                            broker.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
                            broker.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                           'bg-gray-100 text-gray-800'
+                           'bg-red-100 text-red-800'
                          }`}>
                             {broker.status}
                          </span>
                     </td>
                     <td className="px-6 py-3">
-                       <button 
-                         onClick={() => openViewModal(broker)}
-                         className="flex items-center gap-1 text-blue-600 hover:underline"
-                       >
-                         <Eye className="w-4 h-4" /> View
-                       </button>
+                       <div className="flex items-center gap-2">
+                         <button 
+                           onClick={() => openViewModal(broker)}
+                           className="flex items-center gap-1 text-blue-600 hover:underline text-sm"
+                         >
+                           <Eye className="w-4 h-4" />
+                         </button>
+                         <button 
+                           onClick={() => openEditModal(broker)}
+                           className="flex items-center gap-1 text-green-600 hover:underline text-sm"
+                         >
+                           <Edit className="w-4 h-4" />
+                         </button>
+                       </div>
                     </td>
                   </tr>
                 ))
@@ -167,7 +246,7 @@ const Brokers: React.FC = () => {
       </div>
 
       {/* Create Broker Modal */}
-      {showModal && (
+      {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
@@ -270,6 +349,97 @@ const Brokers: React.FC = () => {
         </div>
       )}
 
+      {/* Edit Broker Modal */}
+      {showEditModal && selectedBroker && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#051b41]">Edit Broker</h2>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                   <label className="block text-sm font-medium mb-1">Contact Name</label>
+                   <input required className="w-full border p-2 rounded" 
+                          value={editBroker.name} onChange={e => setEditBroker({...editBroker, name: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-sm font-medium mb-1">Business Name</label>
+                   <input required className="w-full border p-2 rounded" 
+                          value={editBroker.business_name} onChange={e => setEditBroker({...editBroker, business_name: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                   <label className="block text-sm font-medium mb-1">Email</label>
+                   <input required type="email" className="w-full border p-2 rounded" 
+                          value={editBroker.email} onChange={e => setEditBroker({...editBroker, email: e.target.value})} />
+                </div>
+                <div>
+                   <label className="block text-sm font-medium mb-1">Phone</label>
+                   <input required type="tel" className="w-full border p-2 rounded"
+                          value={editBroker.phone} onChange={e => setEditBroker({...editBroker, phone: e.target.value})} />
+                </div>
+              </div>
+
+              <div>
+                 <label className="block text-sm font-medium mb-1">Website URL</label>
+                 <input required type="url" className="w-full border p-2 rounded"
+                        value={editBroker.website} onChange={e => setEditBroker({...editBroker, website: e.target.value})} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                   <label className="block text-sm font-medium mb-1">Revenue Share (%)</label>
+                   <input type="number" min="0" max="100" className="w-full border p-2 rounded" 
+                          value={editBroker.revenue_share} onChange={e => setEditBroker({...editBroker, revenue_share: parseInt(e.target.value) || 10})} />
+                </div>
+                <div>
+                   <label className="block text-sm font-medium mb-1">Status</label>
+                   <select className="w-full border p-2 rounded" 
+                           value={editBroker.status} onChange={e => setEditBroker({...editBroker, status: e.target.value})}>
+                     <option value="ACTIVE">Active</option>
+                     <option value="PENDING">Pending</option>
+                     <option value="INACTIVE">Inactive</option>
+                   </select>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-2">Security</p>
+                {newSecret ? (
+                  <div className="bg-yellow-50 border border-yellow-200 p-3 rounded">
+                    <p className="text-sm font-bold text-yellow-800 mb-1">New API Secret:</p>
+                    <code className="block bg-black text-green-400 p-2 rounded text-xs break-all">{newSecret}</code>
+                    <p className="text-xs text-red-600 mt-1">⚠️ Copy this now! It won't be shown again.</p>
+                  </div>
+                ) : (
+                  <button 
+                    type="button"
+                    onClick={handleResetSecret}
+                    className="flex items-center gap-2 text-orange-600 hover:text-orange-800 text-sm"
+                  >
+                    <RefreshCw className="w-4 h-4" /> Reset API Secret
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 border p-2 rounded hover:bg-gray-50">Cancel</button>
+                  <button type="submit" disabled={updating} className="flex-1 bg-[#051b41] text-white p-2 rounded hover:bg-blue-900">
+                      {updating ? 'Saving...' : 'Save Changes'}
+                  </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* View Broker Modal */}
       {showViewModal && selectedBroker && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -327,12 +497,20 @@ const Brokers: React.FC = () => {
                 </button>
               </div>
 
-              <button 
-                  onClick={() => setShowViewModal(false)}
-                  className="w-full border border-gray-300 py-2 rounded font-medium hover:bg-gray-50"
-              >
-                  Close
-              </button>
+              <div className="flex gap-3">
+                <button 
+                    onClick={() => { setShowViewModal(false); openEditModal(selectedBroker); }}
+                    className="flex-1 bg-green-600 text-white py-2 rounded font-medium hover:bg-green-700 flex items-center justify-center gap-2"
+                >
+                    <Edit className="w-4 h-4" /> Edit Broker
+                </button>
+                <button 
+                    onClick={() => setShowViewModal(false)}
+                    className="flex-1 border border-gray-300 py-2 rounded font-medium hover:bg-gray-50"
+                >
+                    Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

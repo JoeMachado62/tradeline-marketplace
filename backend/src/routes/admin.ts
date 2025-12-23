@@ -163,6 +163,100 @@ router.post("/brokers", authenticateAdmin,
     }
 });
 
+// PUT /api/admin/brokers/:id - Update broker profile
+router.put("/brokers/:id", authenticateAdmin,
+    validate([
+        body("name").optional().notEmpty(),
+        body("email").optional().isEmail(),
+        body("business_name").optional().notEmpty(),
+        body("phone").optional().notEmpty(),
+        body("website").optional().isURL(),
+        body("revenue_share").optional().isInt({min: 0, max: 100}),
+        body("status").optional().isIn(["ACTIVE", "INACTIVE", "PENDING"]),
+    ]),
+    async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, email, business_name, phone, website, revenue_share, status } = req.body;
+        
+        const existing = await prisma.broker.findUnique({ where: { id } });
+        if (!existing) {
+            res.status(404).json({ error: "Broker not found" });
+            return;
+        }
+
+        // Check email uniqueness if changing
+        if (email && email !== existing.email) {
+            const emailTaken = await prisma.broker.findUnique({ where: { email } });
+            if (emailTaken) {
+                res.status(400).json({ error: "Email already in use by another broker" });
+                return;
+            }
+        }
+
+        const broker = await prisma.broker.update({
+            where: { id },
+            data: {
+                ...(name && { name }),
+                ...(email && { email }),
+                ...(business_name && { business_name }),
+                ...(phone && { phone }),
+                ...(website && { website }),
+                ...(revenue_share !== undefined && { revenue_share_percent: revenue_share }),
+                ...(status && { status }),
+            }
+        });
+
+        res.json({
+            success: true,
+            broker: {
+                id: broker.id,
+                name: broker.name,
+                email: broker.email,
+                business_name: broker.business_name,
+                phone: broker.phone,
+                website: broker.website,
+                revenue_share_percent: broker.revenue_share_percent,
+                status: broker.status,
+                api_key: broker.api_key
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to update broker" });
+    }
+});
+
+// POST /api/admin/brokers/:id/reset-secret - Reset broker's API secret
+router.post("/brokers/:id/reset-secret", authenticateAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        
+        const existing = await prisma.broker.findUnique({ where: { id } });
+        if (!existing) {
+            res.status(404).json({ error: "Broker not found" });
+            return;
+        }
+
+        const newSecretPlain = crypto.randomBytes(16).toString("hex");
+        const newSecretHashed = await bcrypt.hash(newSecretPlain, 10);
+
+        await prisma.broker.update({
+            where: { id },
+            data: { api_secret: newSecretHashed }
+        });
+
+        res.json({
+            success: true,
+            message: "API secret has been reset",
+            api_secret: newSecretPlain // Show once
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to reset secret" });
+    }
+});
+
 /**
  * ORDER MANAGEMENT
  */
