@@ -24,42 +24,66 @@ export class AuthService {
     admin: Partial<Admin>;
     token: string;
   }> {
+    // Try database first
     const admin = await prisma.admin.findUnique({
       where: { email },
     });
 
-    if (!admin || !admin.is_active) {
-      throw new Error("Invalid credentials");
-    }
+    if (admin && admin.is_active) {
+      const isValid = await bcrypt.compare(password, admin.password_hash);
+      if (!isValid) {
+        throw new Error("Invalid credentials");
+      }
 
-    const isValid = await bcrypt.compare(password, admin.password_hash);
-    if (!isValid) {
-      throw new Error("Invalid credentials");
-    }
+      // Update last login
+      await prisma.admin.update({
+        where: { id: admin.id },
+        data: { last_login: new Date() },
+      });
 
-    // Update last login
-    await prisma.admin.update({
-      where: { id: admin.id },
-      data: { last_login: new Date() },
-    });
-
-    // Generate token
-    const token = this.generateToken({
-      id: admin.id,
-      email: admin.email,
-      role: admin.role,
-      type: "admin",
-    });
-
-    return {
-      admin: {
+      // Generate token
+      const token = this.generateToken({
         id: admin.id,
         email: admin.email,
-        name: admin.name,
         role: admin.role,
-      },
-      token,
-    };
+        type: "admin",
+      });
+
+      return {
+        admin: {
+          id: admin.id,
+          email: admin.email,
+          name: admin.name,
+          role: admin.role,
+        },
+        token,
+      };
+    }
+
+    // Fallback: check environment variables (for initial setup/production)
+    const envEmail = process.env.ADMIN_EMAIL;
+    const envPassword = process.env.ADMIN_PASSWORD;
+    
+    if (envEmail && envPassword && email === envEmail && password === envPassword) {
+      const token = this.generateToken({
+        id: "env-admin-1",
+        email: envEmail,
+        role: "SUPER_ADMIN",
+        type: "admin",
+      });
+
+      return {
+        admin: {
+          id: "env-admin-1",
+          email: envEmail,
+          name: "Admin",
+          role: "SUPER_ADMIN" as any,
+        },
+        token,
+      };
+    }
+
+    throw new Error("Invalid credentials");
   }
 
   /**
