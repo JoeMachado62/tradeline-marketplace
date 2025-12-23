@@ -87,32 +87,39 @@ export class TradelineSupplyAPI {
 
       const cleanData = response.data.map((item: any) => {
         // Helper to strip HTML and extract number from price
+        // Uses "Largest Number" strategy to avoid capturing prefix IDs/garbage (e.g. "36 67,000")
         const cleanPrice = (val: any) => {
              if (typeof val === 'number') return val;
-             if (typeof val === 'string') {
-                 // Remove tags
-                 let text = val.replace(/<[^>]*>?/gm, '');
-
-                 // Look for price pattern with $ first to avoid prefix numbers (e.g. "36 $67,000")
-                 const dollarMatch = text.match(/\$\s*([0-9,]+(\.[0-9]+)?)/);
-                 if (dollarMatch) {
-                     text = dollarMatch[1];
+             if (!val) return 0;
+             const str = val.toString();
+             
+             // Replace tags with space to avoid merging numbers
+             const text = str.replace(/<[^>]*>?/gm, ' ');
+             
+             // Extract all number-like sequences
+             const matches = text.match(/[0-9,]+(\.[0-9]+)?/g);
+             if (!matches) return 0;
+             
+             let maxVal = 0;
+             matches.forEach(m => {
+                 const clean = m.replace(/,/g, '');
+                 const num = parseFloat(clean);
+                 if (!isNaN(num)) {
+                     // Filter out likely year numbers if they appear (e.g. 2021) vs price? 
+                     // Usually price/limit > year, or strict parsing checks.
+                     // But for "36" vs "67000", max logic works.
+                     if (num > maxVal) maxVal = num;
                  }
-                 
-                 // Remove non-numeric chars except dot
-                 const num = text.replace(/[^0-9.]/g, '');
-                 return parseFloat(num) || 0;
-             }
-             return 0;
+             });
+             
+             return maxVal;
         };
 
         // Helper to extract stock number
         const cleanStock = (val: any) => {
             if (typeof val === 'number') return val;
              if (typeof val === 'string') {
-                 // Remove tags if any
                  const text = val.replace(/<[^>]*>?/gm, '');
-                 // Extract first number found
                  const match = text.match(/\d+/);
                  return match ? parseInt(match[0]) : 0;
              }
@@ -121,16 +128,9 @@ export class TradelineSupplyAPI {
 
         return {
             ...item,
+            price: cleanPrice(item.price),
             stock: cleanStock(item.stock),
-            credit_limit: (() => {
-                let limit = cleanPrice(item.credit_limit);
-                // Fix for reported issue: "36" prefix appearing on limits (e.g. 3,667,000 -> 67,000)
-                const s = limit.toString();
-                if (limit > 3000000 && s.startsWith('36') && s.length > 2) {
-                    limit = parseFloat(s.substring(2));
-                }
-                return limit;
-            })(),
+            credit_limit: cleanPrice(item.credit_limit),
         };
       });
 
