@@ -91,7 +91,14 @@ export class TradelineSupplyAPI {
              if (typeof val === 'number') return val;
              if (typeof val === 'string') {
                  // Remove tags
-                 const text = val.replace(/<[^>]*>?/gm, '');
+                 let text = val.replace(/<[^>]*>?/gm, '');
+
+                 // Look for price pattern with $ first to avoid prefix numbers (e.g. "36 $67,000")
+                 const dollarMatch = text.match(/\$\s*([0-9,]+(\.[0-9]+)?)/);
+                 if (dollarMatch) {
+                     text = dollarMatch[1];
+                 }
+                 
                  // Remove non-numeric chars except dot
                  const num = text.replace(/[^0-9.]/g, '');
                  return parseFloat(num) || 0;
@@ -117,7 +124,7 @@ export class TradelineSupplyAPI {
             // Sanitize numeric fields that might contain HTML/Currency strings
             price: cleanPrice(item.price),
             stock: cleanStock(item.stock),
-            credit_limit: cleanPrice(item.credit_limit), // Fix for $NaN
+            credit_limit: cleanPrice(item.credit_limit),
         };
       });
 
