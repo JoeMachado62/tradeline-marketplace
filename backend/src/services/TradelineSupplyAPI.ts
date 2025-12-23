@@ -101,7 +101,7 @@ export class TradelineSupplyAPI {
              if (!matches) return 0;
              
              let maxVal = 0;
-             matches.forEach(m => {
+             matches.forEach((m: string) => {
                  const clean = m.replace(/,/g, '');
                  const num = parseFloat(clean);
                  if (!isNaN(num)) {
