@@ -11,6 +11,9 @@ console.log("Config loaded, environment:", config.env);
 
 const app: Express = express();
 
+// Trust proxy for Railway/reverse proxy environments
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(
