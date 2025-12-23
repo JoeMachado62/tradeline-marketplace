@@ -57,6 +57,17 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/payments/webhook", webhookRoutes);
 app.use("/api/admin", adminAuthRoutes);
 
+import path from 'path';
+
+// ... (imports)
+
+// Admin Frontend Static Serving (Must be before API routes or handled carefully)
+const adminPath = path.join(__dirname, '../../admin/dist');
+app.use('/admin', express.static(adminPath));
+app.get('/admin/*', (_req: Request, res: Response) => {
+    res.sendFile(path.join(adminPath, 'index.html'));
+});
+
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
   res.json({

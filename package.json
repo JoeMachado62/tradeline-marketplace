@@ -1,7 +1,12 @@
 {
-  "dependencies": {
-    "@vueuse/core": "^14.1.0",
-    "axios": "^1.13.2",
-    "pinia": "^3.0.4"
+  "name": "tradeline-marketplace-root",
+  "private": true,
+  "scripts": {
+    "postinstall": "cd backend && npm install && cd ../admin && npm install",
+    "build": "cd admin && npm run build && cd ../backend && npm run build",
+    "start": "cd backend && npm start"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
