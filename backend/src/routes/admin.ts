@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { body, query } from "express-validator";
+import { body } from "express-validator";
 import { validate } from "../middleware/validation";
 import { getAuthService } from "../services/AuthService";
 import { prisma } from "../services/Database";
