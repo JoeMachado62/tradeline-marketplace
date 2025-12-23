@@ -94,8 +94,8 @@ router.get("/brokers", authenticateAdmin, async (_req: Request, res: Response) =
         const brokers = await prisma.broker.findMany({
             orderBy: { created_at: 'desc' },
             select: {
-                id: true, name: true, business_name: true, email: true, status: true,
-                created_at: true, revenue_share_percent: true, api_key: true
+                id: true, name: true, business_name: true, email: true, phone: true,
+                website: true, status: true, created_at: true, revenue_share_percent: true, api_key: true
             }
         });
         res.json({ success: true, brokers });
@@ -107,14 +107,16 @@ router.get("/brokers", authenticateAdmin, async (_req: Request, res: Response) =
 // POST /api/admin/brokers - Onboard new broker
 router.post("/brokers", authenticateAdmin, 
     validate([
-        body("name").notEmpty(),
-        body("email").isEmail(),
-        body("business_name").optional(),
+        body("name").notEmpty().withMessage("Contact name is required"),
+        body("email").isEmail().withMessage("Valid email is required"),
+        body("business_name").notEmpty().withMessage("Business name is required"),
+        body("phone").notEmpty().withMessage("Phone number is required"),
+        body("website").isURL().withMessage("Valid website URL is required"),
         body("revenue_share").isInt({min: 0, max: 100}).optional(),
     ]),
     async (req: Request, res: Response) => {
     try {
-        const { name, email, business_name, revenue_share } = req.body;
+        const { name, email, business_name, phone, website, revenue_share } = req.body;
         
         const existing = await prisma.broker.findUnique({ where: { email } });
         if (existing) {
@@ -130,8 +132,10 @@ router.post("/brokers", authenticateAdmin,
             data: {
                 name,
                 email,
-                business_name: business_name || "",
-                revenue_share_percent: revenue_share || 10, // Default 10%
+                business_name,
+                phone,
+                website,
+                revenue_share_percent: revenue_share || 10,
                 api_key: apiKey,
                 api_secret: apiSecretHashed,
                 status: "ACTIVE",
@@ -146,9 +150,12 @@ router.post("/brokers", authenticateAdmin,
                 id: broker.id,
                 name: broker.name,
                 email: broker.email,
+                business_name: broker.business_name,
+                phone: broker.phone,
+                website: broker.website,
                 api_key: broker.api_key
             },
-            api_secret: apiSecretPlain // Show once
+            api_secret: apiSecretPlain
         });
     } catch (error) {
         console.error(error);
