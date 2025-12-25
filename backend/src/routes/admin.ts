@@ -288,4 +288,86 @@ router.get("/orders", authenticateAdmin, async (req: Request, res: Response) => 
     }
 });
 
+/**
+ * POST /api/admin/setup-test-users
+ * TEMPORARY endpoint to setup test user passwords. Protected by secret key.
+ */
+router.post("/setup-test-users", async (req: Request, res: Response) => {
+    const { secret } = req.body;
+    
+    // Simple protection - must know the secret
+    if (secret !== "SETUP_SECRET_2025") {
+        res.status(401).json({ error: "Invalid secret" });
+        return;
+    }
+    
+    const TEST_PASSWORD = "PasswordTesting123!";
+    const passwordHash = await bcrypt.hash(TEST_PASSWORD, 10);
+    
+    const results: any = { admin: null, broker: null, client: null };
+    
+    try {
+        // Admin
+        results.admin = await prisma.admin.upsert({
+            where: { email: "joe@ezwai.com" },
+            update: { password_hash: passwordHash },
+            create: {
+                email: "joe@ezwai.com",
+                password_hash: passwordHash,
+                name: "Joe Machado",
+                role: "SUPER_ADMIN",
+                is_active: true
+            }
+        });
+        
+        // Broker
+        const apiKey = `tlm_${crypto.randomBytes(32).toString("hex")}`;
+        const apiSecretHashed = await bcrypt.hash(crypto.randomBytes(16).toString("hex"), 10);
+        
+        results.broker = await prisma.broker.upsert({
+            where: { email: "joe@ezwai.com" },
+            update: { password_hash: passwordHash },
+            create: {
+                email: "joe@ezwai.com",
+                password_hash: passwordHash,
+                name: "Joe Machado",
+                business_name: "EZWAI",
+                business_address: "123 Test St, Miami, FL 33101",
+                phone: "555-555-5555",
+                api_key: apiKey,
+                api_secret: apiSecretHashed,
+                status: "ACTIVE",
+                revenue_share_percent: 10,
+                markup_type: "PERCENTAGE",
+                markup_value: 0
+            }
+        });
+        
+        // Client
+        results.client = await prisma.client.upsert({
+            where: { email: "testclient@example.com" },
+            update: { password_hash: passwordHash },
+            create: {
+                email: "testclient@example.com",
+                password_hash: passwordHash,
+                name: "Test Client",
+                phone: "555-123-4567",
+                excluded_banks: []
+            }
+        });
+        
+        res.json({
+            success: true,
+            message: "All test users configured with password: " + TEST_PASSWORD,
+            admin_email: results.admin.email,
+            broker_email: results.broker.email,
+            broker_api_key: results.broker.api_key,
+            client_email: results.client.email
+        });
+    } catch (error: any) {
+        console.error("Setup error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
