@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { DollarSign, ShoppingCart, TrendingUp, Copy, CheckCircle } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, Copy, CheckCircle, Code } from 'lucide-react';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -8,6 +8,8 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [broker, setBroker] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
+  const [embedCopied, setEmbedCopied] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -39,6 +41,34 @@ export default function Dashboard() {
       }
   };
 
+  const getEmbedCode = () => {
+    const baseUrl = "https://tradeline-marketplace-production-bcaa.up.railway.app";
+    return `<!-- Tradeline Widget Styles -->
+<link rel="stylesheet" href="${baseUrl}/widget/tradeline-widget.css">
+
+<!-- Container where widget will render -->
+<div id="tradeline-widget"></div>
+
+<!-- Widget Configuration & Script -->
+<script>
+  window.TL_WIDGET_CONFIG = {
+    apiKey: "${broker?.api_key || 'YOUR_API_KEY'}",
+    apiUrl: "${baseUrl}/api",
+    theme: {
+      primaryColor: "#2563eb",
+      secondaryColor: "#1e40af"
+    }
+  };
+</script>
+<script src="${baseUrl}/widget/tradeline-widget.iife.js"></script>`;
+  };
+
+  const copyEmbedCode = () => {
+    navigator.clipboard.writeText(getEmbedCode());
+    setEmbedCopied(true);
+    setTimeout(() => setEmbedCopied(false), 2000);
+  };
+
   if (loading) {
     return <div className="text-center py-12 text-gray-500">Loading dashboard...</div>;
   }
@@ -47,16 +77,30 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* API Key Banner */}
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Your Widget Integration Keys</h2>
-          <p className="text-sm text-gray-500 mb-4">Use this API Key to embed the checkout widget on your website.</p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">Your Widget Integration</h2>
+              <p className="text-sm text-gray-500">Use this to embed the tradeline checkout widget on your website.</p>
+            </div>
+            <button 
+              onClick={() => setShowEmbedModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
+            >
+              <Code size={18} />
+              Get Embed Code
+            </button>
+          </div>
           
           <div className="flex gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
-               <span className="font-mono text-sm text-gray-700 flex-1 break-all">{broker?.api_key}</span>
+               <div className="flex-1">
+                 <span className="text-xs text-gray-500 block mb-1">API Key</span>
+                 <span className="font-mono text-sm text-gray-700 break-all">{broker?.api_key}</span>
+               </div>
                <button 
                   onClick={copyApiKey}
                   className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-800"
                >
-                   {copied ? <><CheckCircle size={16}/> Copied</> : <><Copy size={16}/> Copy Key</>}
+                   {copied ? <><CheckCircle size={16}/> Copied</> : <><Copy size={16}/> Copy</>}
                </button>
           </div>
       </div>
@@ -142,6 +186,67 @@ export default function Dashboard() {
             </table>
         </div>
       </div>
+
+      {/* Embed Code Modal */}
+      {showEmbedModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Widget Embed Code</h2>
+              <button onClick={() => setShowEmbedModal(false)} className="text-gray-400 hover:text-gray-600 text-2xl">
+                ×
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-gray-600 mb-4">
+                Copy and paste this code into your website where you want the tradeline widget to appear.
+                Your API key is already included.
+              </p>
+              
+              <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                <pre className="text-green-400 text-sm font-mono whitespace-pre-wrap">
+                  {getEmbedCode()}
+                </pre>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">📋 Instructions:</h4>
+              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                <li>Copy the embed code above</li>
+                <li>Paste it into your website's HTML where you want the widget</li>
+                <li>The widget will automatically load and display tradelines</li>
+                <li>Customers can add to cart and checkout directly from your site</li>
+              </ol>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <h4 className="font-semibold text-yellow-900 mb-2">⚠️ Important:</h4>
+              <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
+                <li>Keep your API key confidential - don't share it publicly</li>
+                <li>Orders placed through your widget are automatically linked to your account</li>
+                <li>You earn commissions on all sales through your widget</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowEmbedModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Close
+              </button>
+              <button 
+                onClick={copyEmbedCode}
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center justify-center gap-2"
+              >
+                {embedCopied ? <><CheckCircle size={18} /> Copied!</> : <><Copy size={18} /> Copy Embed Code</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
