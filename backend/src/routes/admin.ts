@@ -370,4 +370,73 @@ router.post("/setup-test-users", async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * POST /api/admin/orders/:id/mark-paid
+ * Mark an order as paid (manual payment received)
+ */
+router.post("/orders/:id/mark-paid", authenticateAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { payment_method } = req.body;
+        const adminId = req.admin?.id;
+        
+        // Find the order
+        const order = await prisma.order.findUnique({
+            where: { id },
+            include: { broker: true }
+        });
+        
+        if (!order) {
+            res.status(404).json({ error: "Order not found" });
+            return;
+        }
+        
+        if (order.payment_status === "PAID") {
+            res.status(400).json({ error: "Order is already marked as paid" });
+            return;
+        }
+        
+        // Update order status
+        const updatedOrder = await prisma.order.update({
+            where: { id },
+            data: {
+                payment_status: "PAID",
+                payment_method: payment_method || "MANUAL",
+                status: "PROCESSING", // Move to processing after payment received
+                updated_at: new Date()
+            }
+        });
+        
+        // Log activity
+        await prisma.activityLog.create({
+            data: {
+                broker_id: order.broker_id || undefined,
+                action: "ORDER_MARKED_PAID",
+                metadata: {
+                    order_id: id,
+                    order_number: order.order_number,
+                    payment_method,
+                    admin_id: adminId,
+                    amount: order.total_charged
+                }
+            }
+        });
+        
+        // TODO: Trigger TradelineSupply order creation here
+        // const orderService = getOrderService();
+        // await orderService.processPayment(id, undefined, payment_method);
+        
+        res.json({
+            success: true,
+            order: updatedOrder,
+            message: "Payment recorded successfully. Order moved to processing."
+        });
+        
+    } catch (error: any) {
+        console.error("Mark paid error:", error);
+        res.status(500).json({ error: error.message || "Failed to mark order as paid" });
+    }
+});
+
 export default router;
+

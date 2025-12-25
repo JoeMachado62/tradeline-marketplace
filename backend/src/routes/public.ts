@@ -255,107 +255,167 @@ router.get(
 
 /**
  * POST /api/public/checkout
- * Create a Stripe checkout session
+ * Process checkout with document uploads (multipart/form-data)
  */
 router.post(
   "/checkout",
   authenticateBroker,
-  validate([
-    body("customer_email").isEmail().normalizeEmail().withMessage("Valid email required"),
-    body("items").isArray({ min: 1 }).withMessage("Cart items required"),
-    body("items.*.card_id").notEmpty().withMessage("Card ID required"),
-    body("items.*.quantity").isInt({ min: 1, max: 10 }).withMessage("Invalid quantity"),
-    body("success_url").optional().isURL(),
-    body("cancel_url").optional().isURL(),
-  ]),
   async (req: Request, res: Response) => {
     try {
       const broker = req.broker;
-      const { customer, items } = req.body;
-      const { email, name, phone, password, signature } = customer;
-
-      // Import services dynamically if needed or rely on globals at top
-      // const { getOrderService } = require("../services/OrderService");
-      // const orderService = getOrderService();
-      // Using global 'prisma' from imports
-      const bcrypt = require('bcrypt');
+      const multer = require("multer");
+      const path = require("path");
+      const fs = require("fs");
+      const bcrypt = require("bcryptjs");
       
-      // 1. Upsert Client
-      let client = await prisma.client.findUnique({ where: { email } });
-      
-      const updateData: any = {
-        name,
-        phone,
-        // Always update agreement timestamp if signature is present
-        ...(signature ? { 
-            signature, 
-            signed_agreement_date: new Date() 
-        } : {})
-      };
-      
-      if (client) {
-         // Update existing client info
-         client = await prisma.client.update({
-             where: { id: client.id },
-             data: updateData
-         });
-      } else {
-         const passwordHash = await bcrypt.hash(password || "temp1234", 10);
-         client = await prisma.client.create({
-            data: {
-               email,
-               password_hash: passwordHash,
-               ...updateData
-            }
-         });
+      // Setup multer for file uploads
+      const uploadDir = path.join(process.cwd(), "uploads", "documents");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
-
-      // 2. Create Order (Unpaid)
-      const { getOrderService } = require("../services/OrderService");
-      const orderService = getOrderService();
-
-      const order = await orderService.createOrder({
-        broker_id: broker.id,
-        client_id: client.id,
-        customer_email: email,
-        customer_name: name,
-        customer_phone: phone,
-        items: items
+      
+      const storage = multer.diskStorage({
+        destination: uploadDir,
+        filename: (_req: any, file: any, cb: any) => {
+          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+          cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+        }
       });
+      
+      const upload = multer({ 
+        storage,
+        limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+        fileFilter: (_req: any, file: any, cb: any) => {
+          const allowed = /jpeg|jpg|png|gif|pdf/;
+          const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+          const mime = allowed.test(file.mimetype);
+          if (ext && mime) cb(null, true);
+          else cb(new Error("Only images and PDFs allowed"));
+        }
+      }).fields([
+        { name: "id_document", maxCount: 1 },
+        { name: "ssn_document", maxCount: 1 }
+      ]);
+      
+      // Process upload
+      upload(req, res, async (uploadErr: any) => {
+        if (uploadErr) {
+          return res.status(400).json({ error: uploadErr.message, code: "UPLOAD_ERROR" });
+        }
+        
+        try {
+          // Parse form data
+          const { email, name, phone, password, signature, date_of_birth, address } = req.body;
+          let items = req.body.items;
+          
+          // Items come as JSON string from FormData
+          if (typeof items === "string") {
+            items = JSON.parse(items);
+          }
+          
+          if (!email || !name || !items || items.length === 0) {
+            return res.status(400).json({ error: "Missing required fields", code: "VALIDATION_ERROR" });
+          }
+          
+          const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+          const idDocPath = files?.id_document?.[0]?.path || null;
+          const ssnDocPath = files?.ssn_document?.[0]?.path || null;
+          
+          // 1. Upsert Client
+          let client = await prisma.client.findUnique({ where: { email } });
+          
+          const updateData: any = {
+            name,
+            phone,
+            ...(date_of_birth ? { date_of_birth: new Date(date_of_birth) } : {}),
+            ...(address ? { address } : {}),
+            ...(idDocPath ? { id_document_path: idDocPath } : {}),
+            ...(ssnDocPath ? { ssn_document_path: ssnDocPath } : {}),
+            ...(signature ? { signature, signed_agreement_date: new Date() } : {})
+          };
+          
+          if (client) {
+            client = await prisma.client.update({
+              where: { id: client.id },
+              data: updateData
+            });
+          } else {
+            const passwordHash = await bcrypt.hash(password || "temp1234", 10);
+            client = await prisma.client.create({
+              data: {
+                email,
+                password_hash: passwordHash,
+                ...updateData
+              }
+            });
+          }
 
-      // 3. Track Analytics
-      const today = new Date().toISOString().split("T")[0];
-      await prisma.analytics.upsert({
-        where: {
-          broker_id_date: {
+          // 2. Create Order (Pending Payment)
+          const { getOrderService } = require("../services/OrderService");
+          const orderService = getOrderService();
+
+          const order = await orderService.createOrder({
             broker_id: broker.id,
-            date: new Date(today),
-          },
-        },
-        update: {
-          checkout_starts: { increment: 1 },
-          orders_count: { increment: 1 }, 
-        },
-        create: {
-          broker_id: broker.id,
-          date: new Date(today),
-          checkout_starts: 1,
-          orders_count: 1
-        },
-      });
+            client_id: client.id,
+            customer_email: email,
+            customer_name: name,
+            customer_phone: phone,
+            items: items
+          });
 
-      res.json({
-        success: true,
-        order_id: order.id,
-        order_number: order.order_number,
-        redirect_url: `https://app.tradelinesupply.com/portal/login?email=${encodeURIComponent(email)}&new=true`
-        // Provide absolute URL for redirection
+          // 3. Track Analytics
+          const today = new Date().toISOString().split("T")[0];
+          await prisma.analytics.upsert({
+            where: {
+              broker_id_date: {
+                broker_id: broker.id,
+                date: new Date(today),
+              },
+            },
+            update: {
+              checkout_starts: { increment: 1 },
+              orders_count: { increment: 1 }, 
+            },
+            create: {
+              broker_id: broker.id,
+              date: new Date(today),
+              checkout_starts: 1,
+              orders_count: 1
+            },
+          });
+
+          // 4. TODO: Send confirmation email with payment instructions
+          // EmailService.sendOrderConfirmation(client.email, order);
+
+          // Use the Railway production URL
+          const baseUrl = process.env.PUBLIC_URL || "https://tradeline-marketplace-production-bcaa.up.railway.app";
+          
+          res.json({
+            success: true,
+            order_id: order.id,
+            order_number: order.order_number,
+            total: order.total_charged / 100, // Convert cents to dollars
+            redirect_url: `${baseUrl}/portal/login?email=${encodeURIComponent(email)}&new=true`,
+            confirmation_url: `${baseUrl}/portal/order/${order.id}`,
+            message: "Order submitted successfully! Check your email for payment instructions."
+          });
+          return;
+          
+        } catch (error: any) {
+          console.error("Checkout processing error:", error);
+          res.status(500).json({
+            error: "Failed to process order",
+            code: "CHECKOUT_ERROR",
+            message: error.message,
+          });
+          return;
+        }
       });
 
     } catch (error: any) {
-      console.error("Manual checkout error:", error);
+      console.error("Checkout setup error:", error);
       res.status(500).json({
-        error: "Failed to process checkout",
+        error: "Checkout failed",
         code: "CHECKOUT_ERROR",
         message: error.message,
       });

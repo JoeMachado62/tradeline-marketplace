@@ -274,5 +274,66 @@ export const useWidgetStore = defineStore("widget", {
         this.loading = false;
       }
     },
+
+    async checkoutWithDocuments(data: {
+      email: string;
+      name: string;
+      phone: string;
+      password?: string;
+      signature?: string;
+      date_of_birth?: string;
+      address?: string;
+      idDocument?: File | null;
+      ssnDocument?: File | null;
+    }) {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        const formData = new FormData();
+        
+        // Customer info
+        formData.append("email", data.email);
+        formData.append("name", data.name);
+        formData.append("phone", data.phone);
+        if (data.password) formData.append("password", data.password);
+        if (data.signature) formData.append("signature", data.signature);
+        if (data.date_of_birth) formData.append("date_of_birth", data.date_of_birth);
+        if (data.address) formData.append("address", data.address);
+        
+        // Documents
+        if (data.idDocument) formData.append("id_document", data.idDocument);
+        if (data.ssnDocument) formData.append("ssn_document", data.ssnDocument);
+        
+        // Cart items
+        formData.append("items", JSON.stringify(this.cart.map((item) => ({
+          card_id: item.tradeline.card_id,
+          quantity: item.quantity,
+        }))));
+        
+        const response = await axios.post(
+          `${this.config?.apiUrl || 'https://api.tradelinerental.com/api'}/public/checkout`,
+          formData,
+          {
+            headers: {
+              "X-API-Key": this.config?.apiKey,
+              "Content-Type": "multipart/form-data"
+            }
+          }
+        );
+
+        if (response.data.redirect_url) {
+          window.location.href = response.data.redirect_url;
+        } else if (response.data.success) {
+          // Show success message or redirect to confirmation page
+          window.location.href = response.data.confirmation_url || response.data.redirect_url;
+        }
+      } catch (error: any) {
+        this.error = error.response?.data?.error || "Checkout failed. Please try again.";
+        console.error("Checkout with documents failed:", error);
+      } finally {
+        this.loading = false;
+      }
+    },
   },
 });

@@ -56,7 +56,14 @@ model Client {
   password_hash     String         @default("") // Empty default for migration, check in app
   name              String?
   phone             String?
+  date_of_birth     DateTime?
+  address           String?        @db.Text
   excluded_banks    String[]       @default([]) // Banks found in credit report
+  
+  // Identity Documents
+  id_document_path  String?        // Driver's license / Passport / State ID path
+  ssn_document_path String?        // SSN card path
+  documents_verified Boolean       @default(false)
   
   // Agreement
   signature         String?        @db.Text
@@ -362,6 +369,7 @@ enum OrderStatus {
 enum PaymentStatus {
   PENDING
   PROCESSING
+  PAID
   SUCCEEDED
   FAILED
   REFUNDED
@@ -378,11 +386,13 @@ enum PayoutStatus {
 enum PaymentMethod {
   ACH
   WIRE
+  ZELLE
   CHECK
   PAYPAL
   CASH
   MANUAL
   STRIPE
+  OTHER
 }
 
 enum WebhookSource {
