@@ -135,3 +135,50 @@ export const optionalBrokerAuth = async (
     next();
   }
 };
+
+/**
+ * Authenticate broker via JWT (for portal login)
+ */
+export const authenticateBrokerJWT = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        error: "Authorization required",
+        code: "MISSING_AUTH",
+      });
+    }
+
+    const token = authHeader.substring(7);
+
+    try {
+      const decoded = jwt.verify(token, config.jwt.secret) as any;
+
+      if (decoded.type !== "broker") {
+        return res.status(403).json({
+          error: "Broker access required",
+          code: "INSUFFICIENT_PRIVILEGES",
+        });
+      }
+
+      req.broker = decoded;
+      return next();
+    } catch (jwtError) {
+      return res.status(401).json({
+        error: "Invalid or expired token",
+        code: "INVALID_TOKEN",
+      });
+    }
+  } catch (error) {
+    console.error("Broker JWT authentication error:", error);
+    return res.status(500).json({
+      error: "Authentication failed",
+      code: "AUTH_ERROR",
+    });
+  }
+};

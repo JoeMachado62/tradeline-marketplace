@@ -58,6 +58,9 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payouts", payoutRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/portal", portalRoutes);
+
+import brokerPortalRoutes from "./routes/broker-portal";
+app.use("/api/portal/broker", brokerPortalRoutes);
 app.use("/api/payments/webhook", webhookRoutes);
 // Note: admin routes (including login) are handled by adminRoutes above
 
@@ -87,6 +90,16 @@ if (fs.existsSync(portalPath)) {
     app.use('/portal', express.static(portalPath));
     app.get('/portal/*', (_req: Request, res: Response) => {
         res.sendFile(path.join(portalPath, 'index.html'));
+    });
+}
+
+// Broker Portal Static Serving
+const brokerPath = path.join(__dirname, '../broker-dist');
+if (fs.existsSync(brokerPath)) {
+    app.use('/broker/assets', express.static(path.join(brokerPath, 'assets')));
+    app.use('/broker', express.static(brokerPath));
+    app.get('/broker/*', (_req: Request, res: Response) => {
+        res.sendFile(path.join(brokerPath, 'index.html'));
     });
 }
 
