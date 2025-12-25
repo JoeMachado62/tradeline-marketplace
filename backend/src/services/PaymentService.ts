@@ -11,10 +11,18 @@ export class PaymentService {
   private pricingEngine = getPricingEngine();
 
   constructor() {
-    this.stripe = new Stripe(config.stripe.secretKey, {
-      apiVersion: config.stripe.apiVersion as any,
-      typescript: true,
-    });
+    if (config.stripe.secretKey) {
+      try {
+        this.stripe = new Stripe(config.stripe.secretKey, {
+          apiVersion: config.stripe.apiVersion as any,
+          typescript: true,
+        });
+      } catch (e) {
+        console.warn("Failed to initialize Stripe:", e);
+      }
+    } else {
+      console.warn("Stripe secret key not found. Stripe features disabled.");
+    }
   }
 
   /**
@@ -34,6 +42,10 @@ export class PaymentService {
     checkout_url: string;
     order_id: string;
   }> {
+    if (!this.stripe) {
+      throw new Error("Stripe is not configured. Cannot create checkout session.");
+    }
+
     // Calculate pricing with broker commission
     const calculation = await this.pricingEngine.calculateOrderTotal(
       data.items,

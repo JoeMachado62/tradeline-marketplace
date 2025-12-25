@@ -35,6 +35,7 @@ export class OrderService {
       quantity: number;
     }>;
     stripe_session_id?: string;
+    client_id?: string;
   }): Promise<Order> {
     // Calculate pricing with broker commission
     const calculation = await this.pricingEngine.calculateOrderTotal(
@@ -57,6 +58,7 @@ export class OrderService {
         data: {
           order_number: this.generateOrderNumber(),
           broker_id: data.broker_id,
+          client_id: data.client_id, // Link to registered client
           customer_email: data.customer_email,
           customer_name: data.customer_name,
           customer_phone: data.customer_phone,

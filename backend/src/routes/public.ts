@@ -271,21 +271,59 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const broker = req.broker;
-      const { customer_email, items, success_url, cancel_url } = req.body;
+      const { customer, items } = req.body;
+      const { email, name, phone, password, signature } = customer;
 
-      // Get payment service (circular import check might be needed, but singleton should be fine)
-      const { getPaymentService } = require("../services/PaymentService");
-      const paymentService = getPaymentService();
+      // Import services dynamically if needed or rely on globals at top
+      // const { getOrderService } = require("../services/OrderService");
+      // const orderService = getOrderService();
+      // Using global 'prisma' from imports
+      const bcrypt = require('bcrypt');
+      
+      // 1. Upsert Client
+      let client = await prisma.client.findUnique({ where: { email } });
+      
+      const updateData: any = {
+        name,
+        phone,
+        // Always update agreement timestamp if signature is present
+        ...(signature ? { 
+            signature, 
+            signed_agreement_date: new Date() 
+        } : {})
+      };
+      
+      if (client) {
+         // Update existing client info
+         client = await prisma.client.update({
+             where: { id: client.id },
+             data: updateData
+         });
+      } else {
+         const passwordHash = await bcrypt.hash(password || "temp1234", 10);
+         client = await prisma.client.create({
+            data: {
+               email,
+               password_hash: passwordHash,
+               ...updateData
+            }
+         });
+      }
 
-      const result = await paymentService.createCheckoutSession({
+      // 2. Create Order (Unpaid)
+      const { getOrderService } = require("../services/OrderService");
+      const orderService = getOrderService();
+
+      const order = await orderService.createOrder({
         broker_id: broker.id,
-        customer_email,
-        items,
-        success_url,
-        cancel_url,
+        client_id: client.id,
+        customer_email: email,
+        customer_name: name,
+        customer_phone: phone,
+        items: items
       });
 
-      // Track checkout started
+      // 3. Track Analytics
       const today = new Date().toISOString().split("T")[0];
       await prisma.analytics.upsert({
         where: {
@@ -296,24 +334,28 @@ router.post(
         },
         update: {
           checkout_starts: { increment: 1 },
+          orders_count: { increment: 1 }, 
         },
         create: {
           broker_id: broker.id,
           date: new Date(today),
           checkout_starts: 1,
+          orders_count: 1
         },
       });
 
       res.json({
         success: true,
-        session_id: result.session_id,
-        checkout_url: result.checkout_url,
-        order_id: result.order_id,
+        order_id: order.id,
+        order_number: order.order_number,
+        redirect_url: `https://app.tradelinesupply.com/portal/login?email=${encodeURIComponent(email)}&new=true`
+        // Provide absolute URL for redirection
       });
+
     } catch (error: any) {
-      console.error("Public checkout error:", error);
+      console.error("Manual checkout error:", error);
       res.status(500).json({
-        error: "Failed to initiate checkout",
+        error: "Failed to process checkout",
         code: "CHECKOUT_ERROR",
         message: error.message,
       });

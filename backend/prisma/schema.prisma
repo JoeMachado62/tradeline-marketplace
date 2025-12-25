@@ -14,15 +14,15 @@ model Broker {
   business_name         String?
   email                 String    @unique
   phone                 String?
-  website               String?
-
+  business_address      String?   @db.Text
+  
   // Authentication
   api_key               String    @unique
   api_secret            String    // For admin panel access
 
   // Commission Settings (Admin controlled)
   revenue_share_percent Float     @default(10) // 10-25% of base price
-
+  
   // Markup Settings (Broker controlled)
   markup_type           MarkupType @default(PERCENTAGE)
   markup_value          Float     @default(0) // Broker's additional markup
@@ -52,10 +52,15 @@ model Broker {
 model Client {
   id                String         @id @default(uuid())
   email             String         @unique
+  password_hash     String         @default("") // Empty default for migration, check in app
   name              String?
   phone             String?
   excluded_banks    String[]       @default([]) // Banks found in credit report
   
+  // Agreement
+  signature         String?        @db.Text
+  signed_agreement_date DateTime?
+
   orders            Order[]
   credit_reports    CreditReport[]
   
@@ -397,3 +402,5 @@ enum AdminRole {
   STAFF
   SUPPORT
 }
+
+

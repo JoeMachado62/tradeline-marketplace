@@ -85,21 +85,23 @@
       </button>
     </div>
   </div>
+  <CheckoutModal v-if="showCheckoutModal" @close="showCheckoutModal = false" />
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { useWidgetStore } from "../stores/widget";
+import CheckoutModal from "./CheckoutModal.vue";
 
 defineEmits(["close"]);
 
 const store = useWidgetStore();
+const showCheckoutModal = ref(false);
 
 const formatNumber = (num: number) => num.toLocaleString("en-US");
 
-const handleCheckout = async () => {
-  // Simple checkout redirect for now
-  alert("Checkout functionality would be triggered here.");
-  // store.checkout();
+const handleCheckout = () => {
+  showCheckoutModal.value = true;
 };
 </script>
 

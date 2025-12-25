@@ -50,12 +50,14 @@ import orderRoutes from "./routes/orders";
 import payoutRoutes from "./routes/payouts";
 import clientRoutes from "./routes/clients";
 import webhookRoutes from "./routes/webhook";
+import portalRoutes from "./routes/portal";
 
 app.use("/api/public", publicRoutes);
 app.use("/api/brokers", brokerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payouts", payoutRoutes);
 app.use("/api/clients", clientRoutes);
+app.use("/api/portal", portalRoutes);
 app.use("/api/payments/webhook", webhookRoutes);
 // Note: admin routes (including login) are handled by adminRoutes above
 
@@ -69,12 +71,22 @@ console.log('Admin path exists:', fs.existsSync(adminPath));
 
 if (fs.existsSync(adminPath)) {
     app.use('/admin', express.static(adminPath));
-    app.get('/admin/{*path}', (_req: Request, res: Response) => {
+    app.get('/admin/*', (_req: Request, res: Response) => {
         res.sendFile(path.join(adminPath, 'index.html'));
     });
 } else {
     app.get('/admin', (_req: Request, res: Response) => {
         res.status(503).send('Admin panel not available - dist folder not found at: ' + adminPath);
+    });
+}
+
+// Client Portal Static Serving
+const portalPath = path.join(__dirname, '../portal-dist');
+if (fs.existsSync(portalPath)) {
+    app.use('/portal/assets', express.static(path.join(portalPath, 'assets')));
+    app.use('/portal', express.static(portalPath));
+    app.get('/portal/*', (_req: Request, res: Response) => {
+        res.sendFile(path.join(portalPath, 'index.html'));
     });
 }
 

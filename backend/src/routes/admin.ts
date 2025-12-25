@@ -94,8 +94,8 @@ router.get("/brokers", authenticateAdmin, async (_req: Request, res: Response) =
         const brokers = await prisma.broker.findMany({
             orderBy: { created_at: 'desc' },
             select: {
-                id: true, name: true, business_name: true, email: true, phone: true,
-                website: true, status: true, created_at: true, revenue_share_percent: true, api_key: true
+                id: true, name: true, business_name: true, business_address: true, email: true, phone: true,
+                status: true, created_at: true, revenue_share_percent: true, api_key: true
             }
         });
         res.json({ success: true, brokers });
@@ -109,14 +109,14 @@ router.post("/brokers", authenticateAdmin,
     validate([
         body("name").notEmpty().withMessage("Contact name is required"),
         body("email").isEmail().withMessage("Valid email is required"),
-        body("business_name").notEmpty().withMessage("Business name is required"),
+        body("business_name").notEmpty().withMessage("Legal Business Name is required"),
+        body("business_address").notEmpty().withMessage("Business Address is required"),
         body("phone").notEmpty().withMessage("Phone number is required"),
-        body("website").isURL().withMessage("Valid website URL is required"),
         body("revenue_share").isInt({min: 0, max: 100}).optional(),
     ]),
     async (req: Request, res: Response) => {
     try {
-        const { name, email, business_name, phone, website, revenue_share } = req.body;
+        const { name, email, business_name, business_address, phone, revenue_share } = req.body;
         
         const existing = await prisma.broker.findUnique({ where: { email } });
         if (existing) {
@@ -133,8 +133,8 @@ router.post("/brokers", authenticateAdmin,
                 name,
                 email,
                 business_name,
+                business_address,
                 phone,
-                website,
                 revenue_share_percent: revenue_share || 10,
                 api_key: apiKey,
                 api_secret: apiSecretHashed,
@@ -152,7 +152,6 @@ router.post("/brokers", authenticateAdmin,
                 email: broker.email,
                 business_name: broker.business_name,
                 phone: broker.phone,
-                website: broker.website,
                 api_key: broker.api_key
             },
             api_secret: apiSecretPlain
@@ -169,15 +168,15 @@ router.put("/brokers/:id", authenticateAdmin,
         body("name").optional().notEmpty(),
         body("email").optional().isEmail(),
         body("business_name").optional().notEmpty(),
+        body("business_address").optional().notEmpty(),
         body("phone").optional().notEmpty(),
-        body("website").optional().isURL(),
         body("revenue_share").optional().isInt({min: 0, max: 100}),
         body("status").optional().isIn(["ACTIVE", "INACTIVE", "PENDING"]),
     ]),
     async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, email, business_name, phone, website, revenue_share, status } = req.body;
+        const { name, email, business_name, business_address, phone, revenue_share, status } = req.body;
         
         const existing = await prisma.broker.findUnique({ where: { id } });
         if (!existing) {
@@ -200,8 +199,8 @@ router.put("/brokers/:id", authenticateAdmin,
                 ...(name && { name }),
                 ...(email && { email }),
                 ...(business_name && { business_name }),
+                ...(business_address && { business_address }),
                 ...(phone && { phone }),
-                ...(website && { website }),
                 ...(revenue_share !== undefined && { revenue_share_percent: revenue_share }),
                 ...(status && { status }),
             }
@@ -215,7 +214,6 @@ router.put("/brokers/:id", authenticateAdmin,
                 email: broker.email,
                 business_name: broker.business_name,
                 phone: broker.phone,
-                website: broker.website,
                 revenue_share_percent: broker.revenue_share_percent,
                 status: broker.status,
                 api_key: broker.api_key

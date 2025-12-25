@@ -36,7 +36,6 @@ export class BrokerService {
     business_name?: string;
     email: string;
     phone?: string;
-    website?: string;
     revenue_share_percent?: number;
     notes?: string;
   }): Promise<{ broker: Broker; api_secret: string }> {
@@ -71,7 +70,6 @@ export class BrokerService {
         business_name: data.business_name,
         email: data.email,
         phone: data.phone,
-        website: data.website,
         api_key: apiKey,
         api_secret: apiSecret.hashed,
         revenue_share_percent: revenueShare,
@@ -98,7 +96,6 @@ export class BrokerService {
       name: string;
       business_name: string;
       phone: string;
-      website: string;
       revenue_share_percent: number;
       markup_type: "PERCENTAGE" | "FIXED";
       markup_value: number;

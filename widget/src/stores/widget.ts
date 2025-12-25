@@ -250,20 +250,22 @@ export const useWidgetStore = defineStore("widget", {
       if (theme.font_family) root.style.setProperty("--tlm-font", theme.font_family);
     },
 
-    async checkout(customerEmail: string) {
+    async checkout(customer: { email: string; name: string; phone: string; password?: string; signature?: string }) {
       this.loading = true;
       this.error = null;
       try {
         const response = await this.api().post("/public/checkout", {
-          customer_email: customerEmail,
+          customer,
           items: this.cart.map((item) => ({
             card_id: item.tradeline.card_id,
             quantity: item.quantity,
           })),
         });
 
-        if (response.data.checkout_url) {
-          window.location.href = response.data.checkout_url;
+        if (response.data.redirect_url) {
+          window.location.href = response.data.redirect_url;
+        } else if (response.data.checkout_url) {
+             window.location.href = response.data.checkout_url;
         }
       } catch (error: any) {
         this.error = error.response?.data?.error || "Checkout failed";
