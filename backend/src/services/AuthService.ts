@@ -87,11 +87,11 @@ export class AuthService {
   }
 
   /**
-   * Broker portal login
+   * Broker portal login (uses password, not API secret)
    */
   async brokerLogin(
     email: string,
-    apiSecret: string
+    password: string
   ): Promise<{
     broker: Partial<Broker>;
     token: string;
@@ -104,20 +104,15 @@ export class AuthService {
       throw new Error("Invalid credentials");
     }
 
-    // Since we store hashed API secret, we verify it
-    // Note: If you stored plain API secret, this needs adjustment. 
-    // We assume hashed storage for security.
-    const isValid = await bcrypt.compare(apiSecret, broker.api_secret);
-    
-    // Fallback? If api_secret is not hashed (legacy), we might need direct comparison? 
-    // For now, assume it works if we set it up right.
+    // Check if broker has a password set
+    if (!broker.password_hash) {
+      throw new Error("Password not set. Please contact support.");
+    }
+
+    // Verify password
+    const isValid = await bcrypt.compare(password, broker.password_hash);
     if (!isValid) {
-        // Double check if it's a plain string match (TEMPORARY DEV ONLY)
-        if (apiSecret === broker.api_secret) {
-            // It was plain text.
-        } else {
-            throw new Error("Invalid credentials");
-        }
+      throw new Error("Invalid credentials");
     }
 
     // Generate token
@@ -133,7 +128,6 @@ export class AuthService {
         email: broker.email,
         name: broker.name,
         business_name: broker.business_name,
-        // Do not return secret
         api_key: broker.api_key,
         revenue_share_percent: broker.revenue_share_percent || 10,
       },

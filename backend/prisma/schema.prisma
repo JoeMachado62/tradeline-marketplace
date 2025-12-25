@@ -18,7 +18,8 @@ model Broker {
   
   // Authentication
   api_key               String    @unique
-  api_secret            String    // For admin panel access
+  api_secret            String    // For widget authentication (hashed)
+  password_hash         String?   // For portal login (separate from API secret)
 
   // Commission Settings (Admin controlled)
   revenue_share_percent Float     @default(10) // 10-25% of base price

@@ -27,6 +27,7 @@ export default function Brokers() {
     business_name: '',
     business_address: '',
     phone: '',
+    password: '',
     revenue_share: 10
   });
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
@@ -100,7 +101,7 @@ export default function Brokers() {
 
   const closeCreateModal = () => {
     setShowCreateModal(false);
-    setNewBroker({ name: '', email: '', business_name: '', business_address: '', phone: '', revenue_share: 10 });
+    setNewBroker({ name: '', email: '', business_name: '', business_address: '', phone: '', password: '', revenue_share: 10 });
     setCreatedSecret(null);
     setError('');
   };
@@ -301,6 +302,16 @@ export default function Brokers() {
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Initial Password</label>
+                        <input
+                          type="password"
+                          required
+                          minLength={6}
+                          className="w-full border rounded-lg p-2"
+                          placeholder="Min 6 characters"
+                          value={newBroker.password}
+                          onChange={(e) => setNewBroker({ ...newBroker, password: e.target.value })}
+                        />
                       </div>
                   </div>
 

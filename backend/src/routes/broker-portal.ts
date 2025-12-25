@@ -14,19 +14,18 @@ const orderService = getOrderService();
 
 /**
  * POST /api/portal/broker/login
- * Broker login via Email + API Secret
+ * Broker login via Email + Password
  */
 router.post(
   "/login",
   validate([
     body("email").isEmail().normalizeEmail(),
-    body("api_key").notEmpty().withMessage("API Secret is required"), // Intentionally called api_key in FE form? Or use api_secret? Let's use api_secret
+    body("password").notEmpty().withMessage("Password is required"),
   ]),
   async (req: Request, res: Response) => {
     try {
-        const { email, api_secret } = req.body;
-        // Map form field if needed, but let's expect 'api_secret'
-        const result = await authService.brokerLogin(email, api_secret);
+        const { email, password } = req.body;
+        const result = await authService.brokerLogin(email, password);
         
         res.json({
             success: true,

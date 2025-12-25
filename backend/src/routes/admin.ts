@@ -112,11 +112,12 @@ router.post("/brokers", authenticateAdmin,
         body("business_name").notEmpty().withMessage("Legal Business Name is required"),
         body("business_address").notEmpty().withMessage("Business Address is required"),
         body("phone").notEmpty().withMessage("Phone number is required"),
+        body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
         body("revenue_share").isInt({min: 0, max: 100}).optional(),
     ]),
     async (req: Request, res: Response) => {
     try {
-        const { name, email, business_name, business_address, phone, revenue_share } = req.body;
+        const { name, email, business_name, business_address, phone, password, revenue_share } = req.body;
         
         const existing = await prisma.broker.findUnique({ where: { email } });
         if (existing) {
@@ -127,6 +128,7 @@ router.post("/brokers", authenticateAdmin,
         const apiKey = `tlm_${crypto.randomBytes(32).toString("hex")}`;
         const apiSecretPlain = crypto.randomBytes(16).toString("hex");
         const apiSecretHashed = await bcrypt.hash(apiSecretPlain, 10);
+        const passwordHash = await bcrypt.hash(password, 10);
 
         const broker = await prisma.broker.create({
             data: {
@@ -138,6 +140,7 @@ router.post("/brokers", authenticateAdmin,
                 revenue_share_percent: revenue_share || 10,
                 api_key: apiKey,
                 api_secret: apiSecretHashed,
+                password_hash: passwordHash,
                 status: "ACTIVE",
                 markup_type: "PERCENTAGE",
                 markup_value: 0
@@ -154,7 +157,7 @@ router.post("/brokers", authenticateAdmin,
                 phone: broker.phone,
                 api_key: broker.api_key
             },
-            api_secret: apiSecretPlain
+            message: "Broker created. They can log in with their email and password."
         });
     } catch (error) {
         console.error(error);
