@@ -103,6 +103,20 @@ if (fs.existsSync(brokerPath)) {
     });
 }
 
+// Widget JavaScript Serving (for external websites)
+const widgetPath = path.join(__dirname, '../widget-dist');
+if (fs.existsSync(widgetPath)) {
+    // Serve widget files with CORS headers so external sites can load them
+    app.use('/widget', (_req: Request, res: Response, next) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET');
+        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        next();
+    }, express.static(widgetPath));
+    
+    console.log('Widget files available at /widget/');
+}
+
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
