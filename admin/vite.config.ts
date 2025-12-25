@@ -7,5 +7,9 @@ export default defineConfig({
   base: '/admin/',
   server: {
     port: 5173
+  },
+  build: {
+    outDir: '../backend/admin-dist',
+    emptyOutDir: true,
   }
 })
