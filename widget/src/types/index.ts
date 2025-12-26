@@ -18,6 +18,7 @@ export interface CartItem {
 export interface WidgetConfig {
   apiKey: string;
   apiUrl?: string;
+  skipOnboarding?: boolean; // Default true - shows tradelines directly
   theme?: {
     primaryColor?: string;
     secondaryColor?: string;

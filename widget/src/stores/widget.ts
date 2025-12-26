@@ -90,9 +90,13 @@ export const useWidgetStore = defineStore("widget", {
 
       // Load initial data
       await this.loadConfig();
-      // Don't load pricing yet if we want to force onboarding, 
-      // but for now we load it and then filter dynamically
       await this.loadPricing();
+
+      // Skip onboarding by default - show tradelines directly
+      // Users can still enter email at checkout
+      if (config.skipOnboarding !== false) {
+        this.onboardingStep = 'complete';
+      }
 
       // Track widget load
       this.trackEvent("view");
