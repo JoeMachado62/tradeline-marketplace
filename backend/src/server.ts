@@ -108,14 +108,20 @@ const widgetPath = path.join(__dirname, '../widget-dist');
 if (fs.existsSync(widgetPath)) {
     // Serve widget files with CORS headers so external sites can load them
     app.use('/widget', (_req: Request, res: Response, next) => {
+        // CORS headers for cross-origin embedding
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET');
-        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        // Critical: Allow resource to be loaded cross-origin
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        // Cache for 1 hour
+        res.setHeader('Cache-Control', 'public, max-age=3600');
         next();
     }, express.static(widgetPath));
     
     console.log('Widget files available at /widget/');
 }
+
 
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
