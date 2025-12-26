@@ -107,39 +107,25 @@ export class PricingEngine {
 
   /**
    * Calculate pricing for a single tradeline based on broker rules
+   * 
+   * PRICING LOGIC:
+   * - Base Price: Cost from TradelineSupply API
+   * - Broker Markup: Additional amount broker adds (percentage OR fixed)
+   * - Customer Price: Base + Markup (what customer pays)
+   * 
+   * COMMISSION LOGIC:
+   * - Revenue Share: Base Price × (revenue_share_percent / 100)
+   * - Broker Commission: Revenue Share + FULL Markup
+   * 
+   * Example: Base = $500, Markup = 20% ($100), Revenue Share = 10% ($50)
+   * - Customer pays: $600
+   * - Broker earns: $50 (revenue share) + $100 (markup) = $150
+   * - Platform keeps: $500 - $50 = $450
    */
   private calculateTradelinePricing(tradeline: any, broker: Broker): TradelineWithPricing {
     const basePrice = tradeline.price as number;
-    // Platform commission is 50% of the base price from TradelineSupply
-    // Wait - clarification: TradelineSupply IS the platform in some contexts, but here we likely mean
-    // the API price we pay to them.
-    // Let's assume 'basePrice' is the cost.
-    // The previous implementation was:
-    // platform_gross = basePrice * 0.5 (which seems wrong if we are PAYING base price)
-    // Let's stick to the previous logic structure to be safe, but formalized.
     
-    // Re-reading logic from previous files:
-    // platform_gross_commission = base_price * 0.5 ??
-    // Actually, usually:
-    // Wholesale Price = X
-    // Broker Share = Y
-    // Markup = Z
-    
-    // Let's use the standard flow defined in config:
-    // Platform Fee = 50% of the price listed in the feed (assuming feed is RETAIL price?)
-    // Actually, let's treat the feed price as the "Cost Basis".
-    
-    // Previous logic from OrderService:
-    // subtotal_base = PricingEngine.usdToCents(order.subtotal_base)
-    
-    // Let's assume:
-    // Cost = tradeline.price
-    // Revenue Share Base = Cost * (revenue_share_percent / 100)
-    // Markup = Cost * (markup_percent / 100) OR Fixed Amount
-    
-    const revenueSharePercent = broker.revenue_share_percent / 100;
-    const revenueShare = basePrice * revenueSharePercent;
-    
+    // Calculate broker markup (percentage or fixed amount)
     let markup = 0;
     if (broker.markup_type === "PERCENTAGE") {
       markup = basePrice * (broker.markup_value / 100);
@@ -147,16 +133,26 @@ export class PricingEngine {
       markup = broker.markup_value;
     }
     
-    const finalPrice = basePrice + revenueShare + markup;
+    // Customer price = base + markup (revenue share is NOT added to price)
+    const customerPrice = basePrice + markup;
+    
+    // Revenue share is broker's commission on base price
+    const revenueSharePercent = broker.revenue_share_percent / 100;
+    const revenueShare = basePrice * revenueSharePercent;
+    
+    // Total broker commission = revenue share + full markup
+    const brokerCommission = revenueShare + markup;
 
     return {
       ...tradeline,
       base_price: basePrice,
       broker_revenue_share: revenueShare,
       broker_markup: markup,
-      customer_price: finalPrice
+      broker_commission: brokerCommission,
+      customer_price: customerPrice
     };
   }
+
 
   /**
    * Calculate total order price with all splits

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Settings from './pages/Settings';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const token = localStorage.getItem('broker_token');
@@ -16,6 +17,9 @@ function App() {
     <BrowserRouter basename="/broker">
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/settings" element={
+          <ProtectedRoute><Settings /></ProtectedRoute>
+        } />
         
         <Route path="/" element={
            <ProtectedRoute><Layout /></ProtectedRoute>

@@ -61,6 +61,8 @@ router.get(
                     api_key: true, // Needed for display
                     status: true,
                     revenue_share_percent: true,
+                    markup_type: true,
+                    markup_value: true,
                 }
             });
 
@@ -71,6 +73,49 @@ router.get(
             return res.json({ success: true, broker });
         } catch (error) {
             return res.status(500).json({ error: "Failed to fetch profile" });
+        }
+    }
+);
+
+/**
+ * PUT /api/portal/broker/settings
+ * Update broker settings (markup, etc.)
+ */
+router.put(
+    "/settings",
+    authenticateBrokerJWT,
+    validate([
+        body("markup_type").optional().isIn(["PERCENTAGE", "FIXED"]),
+        body("markup_value").optional().isFloat({ min: 0 }),
+    ]),
+    async (req: Request, res: Response) => {
+        try {
+            const { markup_type, markup_value } = req.body;
+            
+            const updateData: any = {};
+            if (markup_type !== undefined) updateData.markup_type = markup_type;
+            if (markup_value !== undefined) updateData.markup_value = parseFloat(markup_value);
+            
+            const broker = await prisma.broker.update({
+                where: { id: req.broker.id },
+                data: updateData,
+                select: {
+                    id: true,
+                    name: true,
+                    markup_type: true,
+                    markup_value: true,
+                    revenue_share_percent: true,
+                }
+            });
+
+            return res.json({ 
+                success: true, 
+                broker,
+                message: "Settings updated successfully"
+            });
+        } catch (error) {
+            console.error("Update settings error:", error);
+            return res.status(500).json({ error: "Failed to update settings" });
         }
     }
 );
@@ -120,3 +165,4 @@ router.get(
 );
 
 export default router;
+

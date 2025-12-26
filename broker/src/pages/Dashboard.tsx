@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { DollarSign, ShoppingCart, TrendingUp, Copy, CheckCircle, Code } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, Copy, CheckCircle, Code, Settings } from 'lucide-react';
+
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -10,6 +13,7 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false);
   const [showEmbedModal, setShowEmbedModal] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
+
 
   useEffect(() => {
     fetchData();
@@ -82,14 +86,24 @@ export default function Dashboard() {
               <h2 className="text-lg font-semibold text-gray-900 mb-1">Your Widget Integration</h2>
               <p className="text-sm text-gray-500">Use this to embed the tradeline checkout widget on your website.</p>
             </div>
-            <button 
-              onClick={() => setShowEmbedModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
-            >
-              <Code size={18} />
-              Get Embed Code
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => navigate('/settings')}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+              >
+                <Settings size={18} />
+                Settings
+              </button>
+              <button 
+                onClick={() => setShowEmbedModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
+              >
+                <Code size={18} />
+                Get Embed Code
+              </button>
+            </div>
           </div>
+
           
           <div className="flex gap-4 items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
                <div className="flex-1">

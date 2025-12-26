@@ -20,10 +20,12 @@ export interface TradelineWithPricing extends Tradeline {
   base_price: number; // TradelineSupply price (includes our markup)
   broker_revenue_share: number; // Broker's share of our commission (10-25% of base)
   broker_markup: number; // Broker's additional markup (they keep 100%)
-  customer_price: number; // Final price customer sees
-  platform_net_revenue: number; // What platform keeps after sharing
-  broker_total_earnings: number; // Revenue share + markup
+  broker_commission: number; // Total broker earnings: revenue_share + markup
+  customer_price: number; // Final price customer sees: base + markup
+  platform_net_revenue?: number; // What platform keeps after sharing
+  broker_total_earnings?: number; // Alias for broker_commission
 }
+
 
 export interface BrokerConfig {
   id: string;
