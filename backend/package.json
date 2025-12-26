@@ -17,6 +17,8 @@
     "create-broker": "node dist/scripts/create_broker.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.958.0",
+    "@aws-sdk/s3-request-presigner": "^3.958.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.22.0",
     "@types/multer": "^2.0.0",
