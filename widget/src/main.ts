@@ -4,8 +4,14 @@ import Widget from './Widget.vue'
 import type { WidgetConfig } from './types'
 import { useWidgetStore } from './stores/widget'
 
-// Standard initialization for standalone testing
-const initWidget = async (config: WidgetConfig, selector: string = '#app') => {
+// Standard initialization
+const initWidget = async (config: WidgetConfig, selector: string = '#tradeline-widget') => {
+  const container = document.querySelector(selector);
+  if (!container) {
+    console.error(`[TradelineWidget] Container "${selector}" not found`);
+    return null;
+  }
+
   const app = createApp(Widget)
   const pinia = createPinia()
   app.use(pinia)
@@ -14,30 +20,31 @@ const initWidget = async (config: WidgetConfig, selector: string = '#app') => {
   const store = useWidgetStore()
   await store.initialize(config)
   
+  console.log('[TradelineWidget] Initialized successfully with API:', config.apiUrl);
   return { app, store }
 }
 
-// Check for global config or auto-init
-const globalConfig = (window as any).TL_WIDGET_CONFIG;
-
-// Development Mode Auto-Init
-if (import.meta.env.DEV && !globalConfig) {
-  const devUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-  console.log("🔧 Development Mode: Connecting to", devUrl);
+// Auto-initialize when DOM is ready
+const autoInit = () => {
+  const globalConfig = (window as any).TL_WIDGET_CONFIG;
   
-  initWidget({
-    apiKey: "test_dev_key",
-    apiUrl: devUrl,
-    theme: {
-      primaryColor: "#2563eb",
-      secondaryColor: "#1e40af"
-    }
-  });
-} else if (globalConfig) {
-  initWidget(globalConfig);
+  if (globalConfig) {
+    console.log('[TradelineWidget] Found config, initializing...');
+    initWidget(globalConfig);
+  } else {
+    console.log('[TradelineWidget] No TL_WIDGET_CONFIG found. Use window.initTradelineWidget(config) to initialize manually.');
+  }
+};
+
+// Run auto-init when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', autoInit);
+} else {
+  // DOM already loaded
+  autoInit();
 }
 
 // Export for manual initialization
-;(window as any).initTradelineWidget = initWidget
+(window as any).initTradelineWidget = initWidget
 
 export { initWidget }
