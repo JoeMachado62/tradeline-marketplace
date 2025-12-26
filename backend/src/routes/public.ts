@@ -166,6 +166,16 @@ router.post(
       }
 
       if (Object.keys(updateData).length > 0) {
+        // Convert increment objects to simple values for create
+        const createData: any = {};
+        for (const [key, value] of Object.entries(updateData)) {
+          if (typeof value === 'object' && value !== null && 'increment' in (value as any)) {
+            createData[key] = (value as any).increment;
+          } else {
+            createData[key] = value;
+          }
+        }
+
         await prisma.analytics.upsert({
           where: {
             broker_id_date: {
@@ -177,10 +187,11 @@ router.post(
           create: {
             broker_id: broker.id,
             date: new Date(today),
-            ...updateData,
+            ...createData,
           },
         });
       }
+
 
       // Log activity
       await prisma.activityLog.create({
