@@ -265,22 +265,11 @@ router.post(
       const broker = req.broker;
       const multer = require("multer");
       const path = require("path");
-      const fs = require("fs");
       const bcrypt = require("bcryptjs");
+      const { S3Service } = require("../services/S3Service");
       
-      // Setup multer for file uploads
-      const uploadDir = path.join(process.cwd(), "uploads", "documents");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      
-      const storage = multer.diskStorage({
-        destination: uploadDir,
-        filename: (_req: any, file: any, cb: any) => {
-          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
-          cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
-        }
-      });
+      // Use memory storage for S3 uploads
+      const storage = multer.memoryStorage();
       
       const upload = multer({ 
         storage,
@@ -318,12 +307,37 @@ router.post(
           }
           
           const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-          const idDocPath = files?.id_document?.[0]?.path || null;
-          const ssnDocPath = files?.ssn_document?.[0]?.path || null;
+          
+          // Create or find client first to get ID for S3 paths
+          let client = await prisma.client.findUnique({ where: { email } });
+          const clientId = client?.id || require("crypto").randomUUID();
+          
+          // Upload documents to S3 if present
+          let idDocPath: string | null = null;
+          let ssnDocPath: string | null = null;
+          
+          if (S3Service.isConfigured()) {
+            const idDocFile = files?.id_document?.[0];
+            const ssnDocFile = files?.ssn_document?.[0];
+            
+            if (idDocFile) {
+              const key = S3Service.generateKey("id_document", clientId, idDocFile.originalname);
+              const result = await S3Service.upload(idDocFile.buffer, key, idDocFile.mimetype);
+              idDocPath = result.key; // Store S3 key, not full URL
+              console.log(`Uploaded ID document to S3: ${key}`);
+            }
+            
+            if (ssnDocFile) {
+              const key = S3Service.generateKey("ssn_document", clientId, ssnDocFile.originalname);
+              const result = await S3Service.upload(ssnDocFile.buffer, key, ssnDocFile.mimetype);
+              ssnDocPath = result.key; // Store S3 key, not full URL
+              console.log(`Uploaded SSN document to S3: ${key}`);
+            }
+          } else {
+            console.warn("S3 not configured - documents will not be stored!");
+          }
           
           // 1. Upsert Client
-          let client = await prisma.client.findUnique({ where: { email } });
-          
           const updateData: any = {
             name,
             phone,
@@ -338,6 +352,7 @@ router.post(
             client = await prisma.client.update({
               where: { id: client.id },
               data: updateData
+
             });
           } else {
             const passwordHash = await bcrypt.hash(password || "temp1234", 10);

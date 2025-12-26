@@ -353,8 +353,7 @@ router.get("/clients/:id", authenticateAdmin, async (req: Request, res: Response
 router.get("/documents/:type/:filename", authenticateAdmin, async (req: Request, res: Response) => {
     try {
         const { type, filename } = req.params;
-        const path = require("path");
-        const fs = require("fs");
+        const { S3Service } = require("../services/S3Service");
         
         // Validate type
         if (!["id_document", "ssn_document"].includes(type)) {
@@ -362,6 +361,17 @@ router.get("/documents/:type/:filename", authenticateAdmin, async (req: Request,
             return;
         }
         
+        // Check if S3 is configured
+        if (S3Service.isConfigured()) {
+            // Generate signed URL for S3 document
+            const signedUrl = await S3Service.getSignedUrl(filename);
+            res.json({ success: true, url: signedUrl });
+            return;
+        }
+        
+        // Fallback to local file serving (for dev)
+        const path = require("path");
+        const fs = require("fs");
         const filePath = path.join(process.cwd(), "uploads", "documents", filename);
         
         if (!fs.existsSync(filePath)) {
@@ -389,6 +399,7 @@ router.get("/documents/:type/:filename", authenticateAdmin, async (req: Request,
         res.status(500).json({ error: "Failed to serve document" });
     }
 });
+
 
 // PUT /api/admin/clients/:id/verify-documents - Mark documents as verified
 router.put("/clients/:id/verify-documents", authenticateAdmin, async (req: Request, res: Response) => {
