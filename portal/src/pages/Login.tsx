@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
 
@@ -47,7 +47,13 @@ const Login: React.FC = () => {
 
         {searchParams.get('new') && (
             <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded mb-6 text-sm">
-                Account created successfully! Please log in with the password you just set.
+                Account created! Please check your email for your temporary password, or use "Forgot Password" below.
+            </div>
+        )}
+        
+        {searchParams.get('reset') && (
+            <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded mb-6 text-sm">
+                Password reset successfully! Please log in with your new password.
             </div>
         )}
 
@@ -87,6 +93,12 @@ const Login: React.FC = () => {
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800">
+              Forgot Password?
+            </Link>
           </div>
 
           <button

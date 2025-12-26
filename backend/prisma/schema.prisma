@@ -68,6 +68,10 @@ model Client {
   // Agreement
   signature         String?        @db.Text
   signed_agreement_date DateTime?
+  
+  // Password Reset
+  reset_token         String?
+  reset_token_expires DateTime?
 
   orders            Order[]
   credit_reports    CreditReport[]
