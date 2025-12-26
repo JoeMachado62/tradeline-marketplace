@@ -273,7 +273,23 @@ router.get("/orders", authenticateAdmin, async (req: Request, res: Response) => 
             prisma.order.findMany({
                 skip, take: limit,
                 orderBy: { created_at: 'desc' },
-                include: { broker: { select: { name: true } } }
+                include: { 
+                    broker: { select: { name: true } },
+                    client: { 
+                        select: { 
+                            id: true,
+                            name: true, 
+                            email: true,
+                            phone: true,
+                            id_document_path: true,
+                            ssn_document_path: true,
+                            documents_verified: true,
+                            signature: true,
+                            signed_agreement_date: true
+                        } 
+                    },
+                    items: true
+                }
             }),
             prisma.order.count()
         ]);
@@ -287,6 +303,115 @@ router.get("/orders", authenticateAdmin, async (req: Request, res: Response) => 
         res.status(500).json({ error: "Failed to fetch orders" });
     }
 });
+
+// GET /api/admin/clients/:id - Get client details with documents
+router.get("/clients/:id", authenticateAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        
+        const client = await prisma.client.findUnique({
+            where: { id },
+            include: {
+                orders: {
+                    orderBy: { created_at: 'desc' },
+                    take: 10,
+                    include: { items: true }
+                }
+            }
+        });
+        
+        if (!client) {
+            res.status(404).json({ error: "Client not found" });
+            return;
+        }
+        
+        res.json({
+            success: true,
+            client: {
+                id: client.id,
+                email: client.email,
+                name: client.name,
+                phone: client.phone,
+                date_of_birth: client.date_of_birth,
+                address: client.address,
+                id_document_path: client.id_document_path,
+                ssn_document_path: client.ssn_document_path,
+                documents_verified: client.documents_verified,
+                signature: client.signature,
+                signed_agreement_date: client.signed_agreement_date,
+                created_at: client.created_at,
+                orders: client.orders
+            }
+        });
+    } catch (error) {
+        console.error("Fetch client error:", error);
+        res.status(500).json({ error: "Failed to fetch client" });
+    }
+});
+
+// GET /api/admin/documents/:type/:filename - Serve uploaded documents
+router.get("/documents/:type/:filename", authenticateAdmin, async (req: Request, res: Response) => {
+    try {
+        const { type, filename } = req.params;
+        const path = require("path");
+        const fs = require("fs");
+        
+        // Validate type
+        if (!["id_document", "ssn_document"].includes(type)) {
+            res.status(400).json({ error: "Invalid document type" });
+            return;
+        }
+        
+        const filePath = path.join(process.cwd(), "uploads", "documents", filename);
+        
+        if (!fs.existsSync(filePath)) {
+            res.status(404).json({ error: "Document not found" });
+            return;
+        }
+        
+        // Determine content type
+        const ext = path.extname(filename).toLowerCase();
+        const contentTypes: Record<string, string> = {
+            ".pdf": "application/pdf",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif"
+        };
+        
+        res.setHeader("Content-Type", contentTypes[ext] || "application/octet-stream");
+        res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+        
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+    } catch (error) {
+        console.error("Document serve error:", error);
+        res.status(500).json({ error: "Failed to serve document" });
+    }
+});
+
+// PUT /api/admin/clients/:id/verify-documents - Mark documents as verified
+router.put("/clients/:id/verify-documents", authenticateAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { verified } = req.body;
+        
+        const client = await prisma.client.update({
+            where: { id },
+            data: { documents_verified: verified === true }
+        });
+        
+        res.json({
+            success: true,
+            message: verified ? "Documents verified" : "Documents unverified",
+            documents_verified: client.documents_verified
+        });
+    } catch (error) {
+        console.error("Verify documents error:", error);
+        res.status(500).json({ error: "Failed to update verification status" });
+    }
+});
+
 
 /**
  * POST /api/admin/setup-test-users
