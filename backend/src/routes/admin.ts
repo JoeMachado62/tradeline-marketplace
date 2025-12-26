@@ -304,7 +304,118 @@ router.get("/orders", authenticateAdmin, async (req: Request, res: Response) => 
     }
 });
 
+// DELETE /api/admin/orders/:id - Delete an order (for cleaning up test data)
+router.delete("/orders/:id", authenticateAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        
+        // Check if order exists
+        const order = await prisma.order.findUnique({ where: { id } });
+        if (!order) {
+            res.status(404).json({ error: "Order not found" });
+            return;
+        }
+        
+        // Delete related records first (cascade should handle most, but be explicit)
+        await prisma.orderItem.deleteMany({ where: { order_id: id } });
+        await prisma.commissionRecord.deleteMany({ where: { order_id: id } });
+        await prisma.webhookLog.deleteMany({ where: { order_id: id } });
+        
+        // Delete the order
+        await prisma.order.delete({ where: { id } });
+        
+        console.log(`Admin deleted order ${order.order_number}`);
+        
+        res.json({ 
+            success: true, 
+            message: `Order ${order.order_number} deleted successfully` 
+        });
+    } catch (error) {
+        console.error("Delete order error:", error);
+        res.status(500).json({ error: "Failed to delete order" });
+    }
+});
+
+// DELETE /api/admin/clients/:id - Delete a client (for cleaning up test data)
+router.delete("/clients/:id", authenticateAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        
+        // Check if client exists
+        const client = await prisma.client.findUnique({ 
+            where: { id },
+            include: { orders: true }
+        });
+        
+        if (!client) {
+            res.status(404).json({ error: "Client not found" });
+            return;
+        }
+        
+        // Delete related orders first
+        for (const order of client.orders) {
+            await prisma.orderItem.deleteMany({ where: { order_id: order.id } });
+            await prisma.commissionRecord.deleteMany({ where: { order_id: order.id } });
+            await prisma.webhookLog.deleteMany({ where: { order_id: order.id } });
+            await prisma.order.delete({ where: { id: order.id } });
+        }
+        
+        // Delete credit reports
+        await prisma.creditReport.deleteMany({ where: { client_id: id } });
+        
+        // Delete the client
+        await prisma.client.delete({ where: { id } });
+        
+        console.log(`Admin deleted client ${client.email}`);
+        
+        res.json({ 
+            success: true, 
+            message: `Client ${client.email} and ${client.orders.length} related orders deleted` 
+        });
+    } catch (error) {
+        console.error("Delete client error:", error);
+        res.status(500).json({ error: "Failed to delete client" });
+    }
+});
+
+
+// GET /api/admin/clients - List all clients
+router.get("/clients", authenticateAdmin, async (req: Request, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = 50;
+        const skip = (page - 1) * limit;
+
+        const [clients, total] = await Promise.all([
+            prisma.client.findMany({
+                skip, take: limit,
+                orderBy: { created_at: 'desc' },
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    phone: true,
+                    created_at: true,
+                    documents_verified: true,
+                    signed_agreement_date: true,
+                    _count: { select: { orders: true } }
+                }
+            }),
+            prisma.client.count()
+        ]);
+
+        res.json({
+            success: true,
+            clients,
+            pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch clients" });
+    }
+});
+
 // GET /api/admin/clients/:id - Get client details with documents
+
 router.get("/clients/:id", authenticateAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;

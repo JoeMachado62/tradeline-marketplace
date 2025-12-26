@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
-import { DollarSign, Eye, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { DollarSign, Eye, CheckCircle, XCircle, Clock, AlertCircle, Trash2 } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -22,6 +22,7 @@ const Orders: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>("ZELLE");
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -37,6 +38,24 @@ const Orders: React.FC = () => {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    if (!confirm(`Delete order ${order.order_number}? This cannot be undone.`)) {
+      return;
+    }
+    
+    setDeletingId(order.id);
+    try {
+      const { data } = await api.delete(`/admin/orders/${order.id}`);
+      if (data.success) {
+        setOrders(orders.filter(o => o.id !== order.id));
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Failed to delete order');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -65,6 +84,7 @@ const Orders: React.FC = () => {
       setProcessingPayment(false);
     }
   };
+
 
   const getStatusBadge = (status: string, paymentStatus: string) => {
     const statusConfig: Record<string, { bg: string; text: string; icon: any }> = {
@@ -163,8 +183,18 @@ const Orders: React.FC = () => {
                             <DollarSign className="w-4 h-4" /> Mark Paid
                           </button>
                         )}
+                        
+                        <button 
+                          className="text-red-600 hover:text-red-800 flex items-center gap-1 disabled:opacity-50"
+                          onClick={() => handleDeleteOrder(order)}
+                          disabled={deletingId === order.id}
+                        >
+                          <Trash2 className="w-4 h-4" /> 
+                          {deletingId === order.id ? 'Deleting...' : 'Delete'}
+                        </button>
                       </div>
                     </td>
+
                   </tr>
                 ))
               )}
