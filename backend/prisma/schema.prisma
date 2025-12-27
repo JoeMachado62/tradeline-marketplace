@@ -58,7 +58,7 @@ model Client {
   phone             String?
   date_of_birth     DateTime?
   address           String?        @db.Text
-  excluded_banks    String[]       @default([]) // Banks found in credit report
+  excluded_banks    Json           @default("[]") // Banks found in credit report
   
   // Identity Documents
   id_document_path  String?        // Driver's license / Passport / State ID path
@@ -90,7 +90,7 @@ model CreditReport {
   status            String   // PENDING, PARSED, FAILED
   
   parsed_data       Json?    // Full AI extraction result
-  creditors_found   String[] // Extracted list
+  creditors_found   Json     @default("[]") // Extracted list
   
   created_at        DateTime @default(now())
 }
