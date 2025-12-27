@@ -90,7 +90,7 @@ console.log('Admin path exists:', fs.existsSync(adminPath));
 
 if (fs.existsSync(adminPath)) {
     app.use('/admin', express.static(adminPath));
-    app.get('/admin/{*path}', (_req: Request, res: Response) => {
+    app.get('/admin/*', (_req: Request, res: Response) => {
         res.sendFile(path.join(adminPath, 'index.html'));
     });
 } else {
@@ -104,7 +104,7 @@ const portalPath = path.join(__dirname, '../portal-dist');
 if (fs.existsSync(portalPath)) {
     app.use('/portal/assets', express.static(path.join(portalPath, 'assets')));
     app.use('/portal', express.static(portalPath));
-    app.get('/portal/{*path}', (_req: Request, res: Response) => {
+    app.get('/portal/*', (_req: Request, res: Response) => {
         res.sendFile(path.join(portalPath, 'index.html'));
     });
 }
@@ -114,7 +114,7 @@ const brokerPath = path.join(__dirname, '../broker-dist');
 if (fs.existsSync(brokerPath)) {
     app.use('/broker-portal/assets', express.static(path.join(brokerPath, 'assets')));
     app.use('/broker-portal', express.static(brokerPath));
-    app.get('/broker-portal*', (_req: Request, res: Response) => {
+    app.get('/broker-portal/*', (_req: Request, res: Response) => {
         res.sendFile(path.join(brokerPath, 'index.html'));
     });
 }
