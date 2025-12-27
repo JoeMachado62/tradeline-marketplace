@@ -5,17 +5,30 @@ import helmet from "helmet";
 import morgan from "morgan";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import path from 'path';
+import expressLayouts from "express-ejs-layouts";
 import { config } from "./config";
 
 console.log("Config loaded, environment:", config.env);
 
 const app: Express = express();
 
+// View engine setup
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "../views"));
+app.use(expressLayouts);
+app.set("layout", "partials/base");
+app.set("layout extractScripts", true);
+app.set("layout extractStyles", true);
+
 // Trust proxy for Railway/reverse proxy environments
 app.set('trust proxy', 1);
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Required for external widget and scripts
+  crossOriginEmbedderPolicy: false
+}));
 app.use(
   cors({
     origin: config.api.corsOrigin,
@@ -39,6 +52,10 @@ app.use(compression());
 app.use(morgan(config.env === "development" ? "dev" : "combined"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Static files for the main website
+app.use(express.static(path.join(__dirname, "../public/site")));
+
 
 // Registration of routes
 import adminRoutes from "./routes/admin";
@@ -64,7 +81,6 @@ app.use("/api/portal/broker", brokerPortalRoutes);
 app.use("/api/payments/webhook", webhookRoutes);
 // Note: admin routes (including login) are handled by adminRoutes above
 
-import path from 'path';
 import fs from 'fs';
 
 // Admin Frontend Static Serving
@@ -96,9 +112,9 @@ if (fs.existsSync(portalPath)) {
 // Broker Portal Static Serving
 const brokerPath = path.join(__dirname, '../broker-dist');
 if (fs.existsSync(brokerPath)) {
-    app.use('/broker/assets', express.static(path.join(brokerPath, 'assets')));
-    app.use('/broker', express.static(brokerPath));
-    app.get('/broker/{*path}', (_req: Request, res: Response) => {
+    app.use('/broker-portal/assets', express.static(path.join(brokerPath, 'assets')));
+    app.use('/broker-portal', express.static(brokerPath));
+    app.get('/broker-portal*', (_req: Request, res: Response) => {
         res.sendFile(path.join(brokerPath, 'index.html'));
     });
 }
@@ -133,36 +149,6 @@ app.get("/health", (_req: Request, res: Response) => {
   });
 });
 
-// Root endpoint - Status Page
-app.get("/", (_req: Request, res: Response) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Tradeline Marketplace API</title>
-        <style>
-          body { font-family: system-ui, sans-serif; padding: 40px; text-align: center; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 30px; border-radius: 12px; }
-          .status { color: #10b981; font-weight: bold; font-size: 1.2em; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>🚀 Tradeline Marketplace API</h1>
-          <p>The backend services are <span class="status">ONLINE</span>.</p>
-          <p>This is the engine powering your widget. It does not have a user interface itself.</p>
-          <hr>
-          <p style="font-size: 0.9em; color: #666;">
-            Deployment: ${config.env}<br>
-            Gemini AI: Enabled<br>
-            Stripe Payments: Ready
-          </p>
-        </div>
-      </body>
-    </html>
-  `);
-});
-
 // API info endpoint
 app.get("/api", (_req: Request, res: Response) => {
   res.json({
@@ -175,6 +161,9 @@ app.get("/api", (_req: Request, res: Response) => {
     },
   });
 });
+
+import siteRoutes from "./routes/site";
+app.use("/", siteRoutes);
 
 // Error handling middleware (must be last)
 app.use((err: any, _req: Request, res: Response, _next: any) => {

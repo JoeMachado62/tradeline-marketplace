@@ -1,0 +1,95 @@
+@use '../../utils/' as * ;
+
+/*============= TEAM CSS AREA ===============*/
+.team1-section-area {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    .team-boxarea {
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        margin-bottom: 30px;
+        &:hover {
+            .img1 {
+                img {
+                    transform: scale(1.1) rotate(4deg);
+                    transition: all .4s;
+                    filter: grayscale(1);
+                }
+                ul {
+                    left: 20px;
+                    transition: all .6s;
+                }
+            }
+
+        }
+        .img1 {
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            border-radius: 8px;
+            ul {
+                position: absolute;
+                bottom: 50px;
+                left: -100px;
+                transition: all .6s;
+                li {
+                    a {
+                        height: 32px;
+                        width: 32px;
+                        text-align: center;
+                        line-height: 32px;
+                        display: inline-block;
+                        transition: all .4s;
+                        background: var(--ztc-bg-bg-1);
+                        color: var(--ztc-text-text-2);
+                        border-radius: 8px;
+                        margin-bottom: 8px;
+                        &:hover {
+                            background: var(--ztc-bg-bg-3);
+                            color: var(--ztc-text-text-1);
+                            transition: all .4s;
+                        }
+                    }
+                }
+            }
+            img {
+                height: 100%;
+                width: 100%;
+                object-fit: cover;
+                border-radius: 8px;
+                transition: all .4s;
+            }
+        }
+        .content-area {
+            a {
+                color: var(--ztc-text-text-2);
+                text-align: center;
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s24);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 24px;
+                display: inline-block;
+                transition: all .4s; 
+                &:hover {
+                    color: var(--ztc-text-text-4);
+                    transition: all .4s;
+                }      
+            }
+            p {
+                color: var(--ztc-text-text-3);
+                text-align: center;
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 16px;
+                display: inline-block;
+                transition: all .4s;  
+            }
+        }
+    }
+}
+/*============= TEAM CSS AREA STARTS ===============*/

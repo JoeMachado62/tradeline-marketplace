@@ -1,0 +1,208 @@
+@use '../../utils/' as * ;
+
+/*============= WORK CSS AREA ===============*/
+.work-section-area {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    .work-single-boxarea {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        margin-bottom: 30px;
+        &:hover {
+            .icons {
+                .elements14 {
+                    animation-name: animation-7;
+                    animation-duration: 90s;
+                    animation-iteration-count: infinite;
+                    animation-direction: alternate;
+                    animation-timing-function: cubic-bezier(0.59, 0.59, 1, 1)
+                }
+                .icon {
+                    transform: rotateY(-180deg);
+                    transition: all .4s;
+                }
+            }
+        }
+        .elements12 {
+            position: absolute;
+            right: -115px;
+            top: 25px;
+            @media #{$xs} {
+                display: none;
+            }
+            @media #{$md} {
+                display: block;
+            }
+        }
+        .elements13 {
+            position: absolute;
+            right: -115px;
+            top: 25px;
+            @media #{$xs} {
+                display: none;
+            }
+            @media #{$md} {
+                display: none;
+            }
+        }
+        .icons {
+            position: relative;
+            z-index: 1;
+            display: inline-block;
+            .elements14 {
+                position: absolute;
+                width: 110px;
+                height: 110px;
+                max-width: 110px;
+                max-height: 110px;
+                left: -15px;
+                top: -15px;
+            }
+            .icon {
+                height: 80px;
+                width: 80px;
+                text-align: center;
+                line-height: 80px;
+                display: inline-block;
+                transition: all .4s;
+                background: var(--ztc-bg-bg-5);
+                border-radius: 50%;
+                margin: 0 auto;
+            }
+        }
+        .conten-area {
+            text-align: center;
+            a {
+                color: var(--ztc-text-text-5);
+                text-align: center;
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s24);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 24px; 
+                display: inline-block;
+                transition: all .4s;
+                &:hover {
+                    color: var(--ztc-text-text-6);
+                    transition: all .4s;
+                }
+            }
+            p {
+                color: var(--ztc-text-text-7);
+                text-align: center;
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 26px;
+                transition: all .4s;        
+            }
+        }
+    }
+}
+
+// Homepage 05 //
+.work5-section-area {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    .work-single-boxarea {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        margin-bottom: 30px;
+        &:hover {
+            .icons {
+                .elements14 {
+                    animation-name: animation-7;
+                    animation-duration: 90s;
+                    animation-iteration-count: infinite;
+                    animation-direction: alternate;
+                    animation-timing-function: cubic-bezier(0.59, 0.59, 1, 1)
+                }
+                .icon {
+                    transform: rotateY(-180deg);
+                    transition: all .4s;
+                }
+            }
+        }
+        .elements12 {
+            position: absolute;
+            right: -115px;
+            top: 25px;
+            @media #{$xs} {
+                display: none;
+            }
+            @media #{$md} {
+                display: block;
+            }
+        }
+        .elements13 {
+            position: absolute;
+            right: -115px;
+            top: 25px;
+            @media #{$xs} {
+                display: none;
+            }
+            @media #{$md} {
+                display: none;
+            }
+        }
+        .icons {
+            position: relative;
+            z-index: 1;
+            display: inline-block;
+            .elements14 {
+                position: absolute;
+                width: 110px;
+                height: 110px;
+                max-width: 110px;
+                max-height: 110px;
+                left: -15px;
+                top: -15px;
+            }
+            .icon {
+                height: 80px;
+                width: 80px;
+                text-align: center;
+                line-height: 80px;
+                display: inline-block;
+                transition: all .4s;
+                background: var(--ztc-bg-bg-11);
+                border-radius: 50%;
+                margin: 0 auto;
+            }
+        }
+        .conten-area {
+            text-align: center;
+            a {
+                color: var(--ztc-text-text-14);
+                text-align: center;
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s24);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 24px; 
+                display: inline-block;
+                transition: all .4s;
+                &:hover {
+                    color: var(--ztc-text-text-16);
+                    transition: all .4s;
+                }
+            }
+            p {
+                color: var(--ztc-text-text-15);
+                text-align: center;
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 26px;
+                transition: all .4s;        
+            }
+        }
+    }
+}
+/*============= WORK CSS AREA ===============*/

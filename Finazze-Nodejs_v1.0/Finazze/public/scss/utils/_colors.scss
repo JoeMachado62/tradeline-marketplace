@@ -1,0 +1,38 @@
+$colors: (
+    'text': (
+        'text-1': #fff,
+        'text-2': #061D19,
+        'text-3': #333535,
+        'text-4': #6E9419,
+        'text-5':#0C3A30,
+        'text-6':#9EDD05,
+        'text-7':#50514E,
+        'text-8':#032530,
+        'text-9':#F4D445,
+        'text-10':#484F51,
+        'text-11':#100235,
+        'text-12':#3D3D42,
+        'text-13':#2E0797,
+        'text-14':#0D0E1F,
+        'text-15':#5A5B5B,
+        'text-16':#FB8500,
+    ),
+    'bg': (
+        'bg-1':#fff,
+        'bg-2':#061D19,
+        'bg-3': #6E9419,
+        'bg-4':#0C3A30,
+        'bg-5':#9EDD05,
+        'bg-6':#032530,
+        'bg-7':#F4D445,
+        'bg-8':#100235,
+        'bg-9':var(--04-home-page-maincolors, linear-gradient(90deg, #2E0797 0%, #726EFC 100%)),
+        'bg-10':#0D0E1F,
+        'bg-11':#FB8500,
+    ),
+    'border': (
+        'border-1': #E5E7EB,
+        'border-2': #dfdcdc,
+    )
+);
+

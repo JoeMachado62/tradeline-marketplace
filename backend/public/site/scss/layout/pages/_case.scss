@@ -1,0 +1,114 @@
+@use '../../utils/' as * ;
+
+/*============= CASE STUDY CSS AREA ENDS ===============*/
+.history1-scetion-area {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    .boredr {
+        &::after {
+            position: absolute;
+            content: "";
+            height: 2px;
+            left: 0;
+            width: 100%;
+            top: 60%;
+            background: var(--ztc-bg-bg-3);
+            transition: all .4s;
+            @media #{$xs} {
+                top: 53.5%;
+            }
+            @media #{$md} {
+                top: 50.5%;
+            }
+        }
+    }
+    .history-single-slider {
+        position: relative;
+        z-index: 1;
+        .owl-nav {
+            position: absolute;
+            right: 0;
+            top: -120px;
+            @media #{$xs} {
+                position: relative;
+                z-index: 1;
+                text-align: center;
+                margin-top: 30px;
+                top: 0;
+                left: 0;
+            }
+            @media #{$md} {
+                position: relative;
+                z-index: 1;
+                text-align: center;
+                margin-top: 30px;
+                top: 0;
+                left: 0;
+            }
+            button {
+                height: 50px;
+                width: 50px;
+                text-align: center;
+                line-height: 50px;
+                display: inline-block;
+                transition: all .4s;
+                border-radius: 8px;
+                background: rgba(110, 148, 25, 0.30);
+                color: var(--ztc-text-text-4);
+                font-size: var(--ztc-font-size-font-s20);
+                &:hover {
+                    background: var(--ztc-bg-bg-3);
+                    color: var(--ztc-text-text-1);
+                    transition: all .4s;
+                }
+                &.owl-prev {
+                    margin: 0 16px 0 0;
+                }
+            }
+        }
+        .history-boxarea {
+            position: relative;
+            z-index: 1;
+            h2 {
+                color: var(--ztc-text-text-2);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s44);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 44px;      
+            }
+            span {
+                height: 30px;
+                width: 30px;
+                display: inline-block;
+                border-radius: 50%;
+                background: var(--ztc-bg-bg-3);
+            }
+            a {
+                color: var(--ztc-text-text-2);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s22);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 22px; 
+                display: inline-block;
+                transition: all .4s;
+                &:hover {
+                    color: var(--ztc-text-text-4);
+                    transition: all .4s;
+                }
+            }
+            p {
+                color: var(--ztc-text-text-3);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 24px; 
+                display: inline-block;
+            }
+        }
+    }
+}
+/*============= CASE STUDY CSS AREA ENDS ===============*/

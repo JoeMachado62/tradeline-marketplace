@@ -1,0 +1,23 @@
+{
+    "version": "1.0.0",
+    "main": "app.js",
+    "scripts": {
+        "dev": "nodemon app.js"
+    },
+    "author": "unifato",
+    "license": "ISC",
+    "devDependencies": {
+        "@popperjs/core": "^2.11.8",
+        "browser-sync": "^2.27.10"
+    },
+    "dependencies": {
+        "cookie-parser": "^1.4.7",
+        "dotenv": "^16.5.0",
+        "ejs": "^3.1.10",
+        "express": "^4.21.1",
+        "express-ejs-layouts": "^2.5.1",
+        "express-fileupload": "^1.5.1",
+        "express-session": "^1.18.1",
+        "nodemon": "^3.1.10"
+    }
+}

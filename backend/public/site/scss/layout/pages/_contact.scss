@@ -1,0 +1,512 @@
+@use '../../utils/' as * ;
+
+/*============= CONTACT CSS AREA ===============*/
+.contact2-section-area {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    background: #F2F2F2;
+    .contact-heading {
+        position: relative;
+        z-index: 1;
+        .contact-author-boxarea {
+            position: relative;
+            z-index: 1;
+            background: var(--ztc-bg-bg-1);
+            transition: all .4s;
+            padding: 20px 24px;
+            border-radius: 8px;
+            margin-top: 20px;
+            &:hover {
+                background: var(--ztc-bg-bg-7);
+                transition: all .4s;
+                transform: translateY(-5px);
+                .icons {
+                    background: var(--ztc-bg-bg-6);
+                    transition: all .4s;
+                    img {
+                        filter: brightness(0) invert(1);
+                        transition: all .4s;
+                    }
+                }
+            }
+            .icons {
+                height: 60px;
+                width: 60px;
+                text-align: center;
+                line-height: 60px;
+                border-radius: 8px;
+                display: inline-block;
+                background: var(--ztc-bg-bg-7);
+                position: absolute;
+                transition: all .4s;
+                img {
+                    transition: all .4s;
+                }
+            }
+            .text {
+                padding-left: 80px;
+                h6 {
+                    color: var(--ztc-text-text-8);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s20);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-medium);
+                    line-height: 20px;          
+                }
+                a {
+                    color: var(--ztc-text-text-10);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 26px; /* 162.5% */     
+                }
+            }
+        }
+    }
+    .contact-main-boxarea {
+        border-radius: 8px;
+        background: rgba(3, 3, 11, 0.10);
+        backdrop-filter: blur(0px);
+        position: relative;
+        z-index: 1;
+        padding: 32px;
+        @media #{$xs} {
+            margin-top: 30px;
+        }
+        @media #{$md} {
+            margin-top: 30px;
+        }
+        h4 {
+            color: var(--ztc-text-text-8);
+            font-family: var(--ztc-family-font1);
+            font-size: var(--ztc-font-size-font-s32);
+            font-style: normal;
+            font-weight: var(--ztc-weight-semibold);
+            line-height: 32px;
+            text-transform: uppercase;
+        }
+        .input-area {
+            margin-top: 20px;
+            input {
+                width: 100%;
+                outline: none;
+                background: var(--ztc-bg-bg-1);
+                color: var(--ztc-text-text-8);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 16px;
+                padding: 18px 16px;
+                border-radius: 8px;
+                &::placeholder {
+                    color: var(--ztc-text-text-10);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 16px;
+                }
+            }
+            textarea {
+                width: 100%;
+                outline: none;
+                background: var(--ztc-bg-bg-1);
+                color: var(--ztc-text-text-8);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 16px;
+                padding: 18px 16px;
+                border-radius: 8px;
+                height: 140px;
+                &::placeholder {
+                    color: var(--ztc-text-text-10);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 16px;
+                }
+            }
+            .nice-select {
+                width: 100%;
+                outline: none;
+                background: var(--ztc-bg-bg-1);
+                color: var(--ztc-text-text-10);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 16px;
+                padding: 18px 16px;
+                border-radius: 8px;
+                height: auto;
+                outline: none;
+                border: none;
+                &::after {
+                    height: 7px;
+                    width: 7px;
+                    object-fit: cover;
+                }
+                ul {
+                    width: 100%;
+                }
+                &::placeholder {
+                    color: var(--ztc-text-text-10);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 16px;
+                }
+            }
+            button {
+                border: none;
+                outline: none;
+            }
+        }
+    }
+}
+
+// Homepage 04 //
+.contact4-section-area {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    .contact-header {
+        position: relative;
+        z-index: 1;
+        .contact-boxarea {
+            padding-top: 32px;
+            border-top: 1px solid rgba(16, 2, 53, 0.05);
+            position: relative;
+            z-index: 1;
+            &::after {
+                position: absolute;
+                content: "";
+                height: 100%;
+                width: 1px;
+                transition: all .4s;
+                background: rgba(16, 2, 53, 0.05);
+                top: 0;
+                left: 38%;
+                @media #{$xs} {
+                    display: none;
+                }
+            }
+            .cta-author-area {
+                position: relative;
+                z-index: 1;
+                border-radius: 8px;
+                transition: all .4s;
+                border-radius: 8px;
+                @media #{$xs} {
+                    margin-top: 30px;
+                }
+                .icons {
+                    height: 60px;
+                    width: 60px;
+                    display: inline-block;
+                    transition: all .4s;
+                    background: #EFF1FF;
+                    transition: all .4s;
+                    border-radius: 50%;
+                    text-align: center;
+                    line-height: 60px;
+                }
+                .text {
+                    p {
+                        color: var(--ztc-text-text-12);
+                        font-family: var(--ztc-family-font1);
+                        font-size: var(--ztc-font-size-font-s16);
+                        font-style: normal;
+                        font-weight: var(--ztc-weight-regular);
+                        line-height: 16px;    
+                    }
+                    a {
+                        color: var(--ztc-text-text-11);
+                        font-family: var(--ztc-family-font1);
+                        font-size: var(--ztc-font-size-font-s24);
+                        font-style: normal;
+                        font-weight: var(--ztc-weight-semibold);
+                        line-height: 24px; 
+                        display: inline-block;
+                        transition: all .4s;   
+                        &:hover {
+                            color: var(--ztc-text-text-13);
+                            transition: all .4s;
+                        }   
+                    }
+                }
+            }
+        }
+    }
+
+    .contact-main-boxarea {
+        border-radius: 8px;
+        background: #EFF1FF;
+        backdrop-filter: blur(0px);
+        position: relative;
+        z-index: 1;
+        padding: 32px;
+        @media #{$xs} {
+            margin-top: 30px;
+        }
+        @media #{$md} {
+            margin-top: 30px;
+        }
+        h4 {
+            color: var(--ztc-text-text-11);
+            font-family: var(--ztc-family-font1);
+            font-size: var(--ztc-font-size-font-s32);
+            font-style: normal;
+            font-weight: var(--ztc-weight-semibold);
+            line-height: 32px;
+            text-transform: uppercase;
+        }
+        .input-area {
+            margin-top: 20px;
+            input {
+                width: 100%;
+                outline: none;
+                background: var(--ztc-bg-bg-1);
+                color: var(--ztc-text-text-11);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 16px;
+                padding: 18px 16px;
+                border-radius: 8px;
+                &::placeholder {
+                    color: var(--ztc-text-text-12);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 16px;
+                }
+            }
+            textarea {
+                width: 100%;
+                outline: none;
+                background: var(--ztc-bg-bg-1);
+                color: var(--ztc-text-text-11);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-semibold);
+                line-height: 16px;
+                padding: 18px 16px;
+                border-radius: 8px;
+                height: 140px;
+                &::placeholder {
+                    color: var(--ztc-text-text-12);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 16px;
+                }
+            }
+            .nice-select {
+                width: 100%;
+                outline: none;
+                background: var(--ztc-bg-bg-1);
+                color: var(--ztc-text-text-12);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 16px;
+                padding: 18px 16px;
+                border-radius: 8px;
+                height: auto;
+                outline: none;
+                border: none;
+                &::after {
+                    height: 7px;
+                    width: 7px;
+                    object-fit: cover;
+                }
+                ul {
+                    width: 100%;
+                }
+                &::placeholder {
+                    color: var(--ztc-text-text-12);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 16px;
+                }
+            }
+            button {
+                border: none;
+                outline: none;
+            }
+        }
+    }
+}
+
+// Inner Pages //
+.contact-inner-area {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    .maps-area {
+        iframe {
+            height: 654px;
+            width: 100%;
+        }
+    }
+    .contact-header-area {
+        padding: 0 0 0 50px;
+        @media #{$xs} {
+            padding: 0;
+            margin-top: 30px;
+        }
+
+        @media #{$md} {
+            padding: 0;
+            margin-top: 30px;
+        }
+        .input-area {
+            margin-top: 16px;
+            input {
+                width: 100%;
+                border-radius: 8px;
+                border: 1px solid rgba(6, 29, 25, 0.10);
+                background: var(--ztc-bg-bg-1); 
+                color: var(--ztc-text-text-2);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 16px;
+                padding: 16px;
+                &::placeholder {
+                    color: var(--ztc-text-text-3);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 16px;
+                    opacity: 70%;    
+                }
+
+            }
+
+            textarea {
+                width: 100%;
+                border-radius: 8px;
+                border: 1px solid rgba(6, 29, 25, 0.10);
+                background: var(--ztc-bg-bg-1); 
+                color: var(--ztc-text-text-2);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 16px;
+                padding: 16px;
+                height: 120px;
+                &::placeholder {
+                    color: var(--ztc-text-text-3);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 16px;
+                    opacity: 70%;    
+                }
+
+            }
+
+            button {
+                border: none;
+                outline: none;
+            }
+        }
+    }
+
+    .contact-bottom-box {
+        position: relative;
+        z-index: 1;
+        background: #EDF2F7;
+        padding: 32px;
+        border-radius: 8px;
+        transition: all .4s;
+        margin-bottom: 30px;
+        &:hover {
+            transform: translateY(-5px);
+            transition: all .4s;
+            .contact-box {
+                .icons {
+                    background: var(--ztc-bg-bg-3);
+                    transition: all .4s;
+                    transform: rotateY(-180deg);
+
+                }
+            }
+        }
+        .contact-box {
+            display: flex;
+            align-items: center;
+            .icons {
+                height: 80px;
+                width: 80px;
+                text-align: center;
+                line-height: 80px;
+                display: inline-block;
+                transition: all .4s;
+                border-radius: 8px;
+                background: var(--ztc-bg-bg-2);
+            }
+            .text {
+                padding-left: 24px;
+                span {
+                    color: var(--ztc-text-text-3);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s16);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-regular);
+                    line-height: 26px; 
+                    display: block;       
+                }
+                h4 {
+                    color: var(--ztc-text-text-2);
+                    font-family: var(--ztc-family-font1);
+                    font-size: var(--ztc-font-size-font-s22);
+                    font-style: normal;
+                    font-weight: var(--ztc-weight-semibold);
+                    line-height: 26px; 
+                    display: inline-block; 
+                    padding-top: 16px;     
+                }
+            }
+        }
+        .call {
+            padding-top: 32px;
+            border-top: 1px solid var(--ztc-text-text-1);
+            a {
+                color: var(--ztc-text-text-2);
+                font-family: var(--ztc-family-font1);
+                font-size: var(--ztc-font-size-font-s16);
+                font-style: normal;
+                font-weight: var(--ztc-weight-regular);
+                line-height: 26px; 
+                display: block;
+                transition: all .4s; 
+                &:hover {
+                    color: var(--ztc-text-text-4);
+                    transition: all .4s;
+                }  
+            }
+        }
+    }
+}
+/*============= CONTACT CSS AREA ENDS===============*/

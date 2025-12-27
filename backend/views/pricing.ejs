@@ -1,0 +1,80 @@
+<%- contentFor('html_attribute') %>
+
+<%- contentFor('body_attribute') %>
+
+<%- contentFor('extra_css') %>
+<link rel="stylesheet" href="/widget/tradeline-widget.css">
+<style>
+  #tradeline-widget {
+    min-height: 600px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+    padding: 20px;
+    margin-top: 30px;
+  }
+  .inner-pages-section-area {
+    padding: 100px 0;
+  }
+</style>
+
+<%- contentFor('content') %>
+  <%- include('partials/header/navbar3') %>
+
+  <!-- ===== HERO AREA STARTS ======= -->
+  <div class="inner-pages-section-area" style="background-image: url(/img/all-images/bg/hero-bg1.png); background-position: center; background-repeat: no-repeat; background-size: cover;">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 m-auto">
+          <div class="inner-header text-center">
+            <h2 class="text-anime-style-3">Tradeline Inventory</h2>
+            <div class="space24"></div>
+            <a href="/">Home <i class="fa-solid fa-angle-right"></i> <span>Browse Inventory</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== HERO AREA ENDS ======= -->
+
+  <!-- ===== INVENTORY AREA STARTS ======= -->
+  <div class="inventory-section-area sp2">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 m-auto">
+          <div class="heading3 text-center">
+            <h5>Our Current Inventory</h5>
+            <div class="space16"></div>
+            <h2 class="text-anime-style-3">Find the Perfect Tradeline for Your Credit Profile</h2>
+            <p class="mt-3">Browse our verified, high-limit tradelines below. Add items to your cart and proceed to checkout to begin your credit success journey.</p>
+          </div>
+          
+          <!-- The Tradeline Widget will be mounted here -->
+          <div id="tradeline-widget">
+            <div class="text-center p-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading Inventory...</span>
+              </div>
+              <p class="mt-3">Loading our latest tradeline inventory...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== INVENTORY AREA ENDS ======= -->
+
+<%- contentFor('extra_javascript') %>
+<script>
+  // Configuration for the Tradeline Widget
+  window.TL_WIDGET_CONFIG = {
+    // API URL will be the current domain
+    apiUrl: window.location.origin + '/api/public',
+    apiKey: 'DEFAULT_WIDGET_KEY', // This can be moved to server-side rendering variable if needed
+    theme: {
+      primaryColor: '#032530',
+      accentColor: '#F4D445'
+    }
+  };
+</script>
+<script src="/widget/tradeline-widget.iife.js"></script>
