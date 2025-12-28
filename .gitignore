@@ -10,7 +10,6 @@ widget/.env
 
 # Build Outputs
 dist/
-backend/dist/
 widget/dist/
 build/
 out/
