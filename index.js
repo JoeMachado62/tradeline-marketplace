@@ -8,6 +8,7 @@ const fs = require('fs');
 
 const backendDir = path.join(__dirname, 'backend');
 const serverPath = path.join(backendDir, 'dist', 'server.js');
+const logFile = path.join(__dirname, 'server.log');
 
 // Verify the server file exists
 if (!fs.existsSync(serverPath)) {
@@ -30,10 +31,10 @@ try {
   // Continue anyway - tables might already exist
 }
 
-// Start the server
+// Start the server with logging
 console.log('Starting server...');
 try {
-  execSync(`node ${serverPath}`, {
+  execSync(`node ${serverPath} >> "${logFile}" 2>&1`, {
     cwd: backendDir,
     stdio: 'inherit',
     env: { ...process.env },
