@@ -22,17 +22,23 @@ try {
   execSync('npx prisma migrate deploy --schema=./prisma/schema.prisma', {
     cwd: backendDir,
     stdio: 'inherit',
-    env: { ...process.env }
+    env: { ...process.env },
   });
   console.log('Prisma migrations completed successfully.');
-} catch (error) {
-  console.error('Prisma migration failed:', error.message);
+} catch (err) {
+  console.error('Prisma migrations failed:', err.message || err);
   // Continue anyway - tables might already exist
 }
 
-// Change working directory to backend so relative paths work
-process.chdir(backendDir);
-
 // Start the server
-console.log('Starting Tradeline Marketplace server...');
-require(serverPath);
+console.log('Starting server...');
+try {
+  execSync(`node ${serverPath}`, {
+    cwd: backendDir,
+    stdio: 'inherit',
+    env: { ...process.env },
+  });
+} catch (err) {
+  console.error('Server process exited with error:', err.message || err);
+  process.exit(1);
+}
