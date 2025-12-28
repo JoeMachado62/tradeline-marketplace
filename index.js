@@ -29,10 +29,26 @@ process.on('unhandledRejection', (reason, promise) => {
 log('=== Tradeline Marketplace Startup ===');
 log(`Current directory: ${__dirname}`);
 log(`Node version: ${process.version}`);
-log(`Environment variables: DATABASE_URL=${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
 
 const backendDir = path.join(__dirname, 'backend');
 const serverPath = path.join(backendDir, 'dist', 'server.js');
+
+// Load environment variables from .env.production if it exists
+const envProductionPath = path.join(backendDir, '.env.production');
+const envPath = path.join(backendDir, '.env');
+
+if (fs.existsSync(envProductionPath)) {
+  log(`Loading environment from: ${envProductionPath}`);
+  require('dotenv').config({ path: envProductionPath });
+} else if (fs.existsSync(envPath)) {
+  log(`Loading environment from: ${envPath}`);
+  require('dotenv').config({ path: envPath });
+} else {
+  log('No .env file found, relying on system environment variables');
+}
+
+log(`DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
+log(`JWT_SECRET: ${process.env.JWT_SECRET ? 'SET' : 'NOT SET'}`);
 
 log(`Backend directory: ${backendDir}`);
 log(`Server path: ${serverPath}`);
@@ -48,7 +64,22 @@ if (!fs.existsSync(serverPath)) {
 process.chdir(backendDir);
 log(`Changed working directory to: ${process.cwd()}`);
 
+// Run Prisma migrations at runtime (env vars are now available)
+log('Running Prisma migrations...');
+try {
+  const { execSync } = require('child_process');
+  execSync('npx prisma migrate deploy --schema=./prisma/schema.prisma', {
+    cwd: backendDir,
+    stdio: 'inherit',
+    env: process.env
+  });
+  log('Prisma migrations completed successfully.');
+} catch (err) {
+  log(`Prisma migrations failed: ${err.message}`);
+  // Continue anyway - tables might already exist
+}
+
 // Start the server
 log('Starting server with require()...');
 require(serverPath);
-log('Server module loaded - if you see this, require() succeeded.');
+log('Server module loaded successfully.');
