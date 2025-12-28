@@ -1,7 +1,6 @@
 /**
  * Tradeline Marketplace - Hostinger Entry Point
  */
-const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -15,9 +14,22 @@ function log(message) {
   console.log(message);
 }
 
+// Catch uncaught exceptions
+process.on('uncaughtException', (err) => {
+  log(`UNCAUGHT EXCEPTION: ${err.message}`);
+  log(`Stack: ${err.stack}`);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  log(`UNHANDLED REJECTION: ${reason}`);
+  process.exit(1);
+});
+
 log('=== Tradeline Marketplace Startup ===');
 log(`Current directory: ${__dirname}`);
 log(`Node version: ${process.version}`);
+log(`Environment variables: DATABASE_URL=${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
 
 const backendDir = path.join(__dirname, 'backend');
 const serverPath = path.join(backendDir, 'dist', 'server.js');
@@ -32,21 +44,11 @@ if (!fs.existsSync(serverPath)) {
   process.exit(1);
 }
 
-// Skip Prisma migrations for now - tables should already exist
-// The database connection will be established when the server starts
-log('Skipping Prisma migrations (will run on server start if needed)...');
-
 // Change working directory to backend
 process.chdir(backendDir);
 log(`Changed working directory to: ${process.cwd()}`);
 
-// Start the server using require() - this works because we're in the same Node process
+// Start the server
 log('Starting server with require()...');
-try {
-  require(serverPath);
-  log('Server module loaded successfully.');
-} catch (err) {
-  log(`Server failed to start: ${err.message}`);
-  log(`Stack: ${err.stack}`);
-  process.exit(1);
-}
+require(serverPath);
+log('Server module loaded - if you see this, require() succeeded.');
