@@ -14943,3 +14943,6 @@ Location:
 }
 
 /*============= PRICING CSS AREA ===============*//*# sourceMappingURL=main.css.map */
+/* Fixes for Inner Page Header Visibility */
+.inner-header h1, .inner-header h2, .inner-header .text-anime-style-3 { color: #ffffff !important; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+.inner-header a { color: #f0f0f0 !important; }
