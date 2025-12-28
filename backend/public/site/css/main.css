@@ -403,29 +403,29 @@ img {
   --ztc-text-text-1: #fff;
   --ztc-text-text-2: #061D19;
   --ztc-text-text-3: #333535;
-  --ztc-text-text-4: #6E9419;
-  --ztc-text-text-5: #0C3A30;
-  --ztc-text-text-6: #9EDD05;
+  --ztc-text-text-4: #404377;
+  --ztc-text-text-5: #050953;
+  --ztc-text-text-6: #59cc75;
   --ztc-text-text-7: #50514E;
-  --ztc-text-text-8: #032530;
-  --ztc-text-text-9: #F4D445;
+  --ztc-text-text-8: #050953;
+  --ztc-text-text-9: #59cc75;
   --ztc-text-text-10: #484F51;
-  --ztc-text-text-11: #100235;
+  --ztc-text-text-11: #050953;
   --ztc-text-text-12: #3D3D42;
-  --ztc-text-text-13: #2E0797;
-  --ztc-text-text-14: #0D0E1F;
+  --ztc-text-text-13: #404377;
+  --ztc-text-text-14: #050953;
   --ztc-text-text-15: #5A5B5B;
   --ztc-text-text-16: #FB8500;
   --ztc-bg-bg-1: #fff;
   --ztc-bg-bg-2: #061D19;
-  --ztc-bg-bg-3: #6E9419;
-  --ztc-bg-bg-4: #0C3A30;
-  --ztc-bg-bg-5: #9EDD05;
-  --ztc-bg-bg-6: #032530;
-  --ztc-bg-bg-7: #F4D445;
-  --ztc-bg-bg-8: #100235;
-  --ztc-bg-bg-9: var(--04-home-page-maincolors, linear-gradient(90deg, #2E0797 0%, #726EFC 100%));
-  --ztc-bg-bg-10: #0D0E1F;
+  --ztc-bg-bg-3: #404377;
+  --ztc-bg-bg-4: #050953;
+  --ztc-bg-bg-5: #59cc75;
+  --ztc-bg-bg-6: #050953;
+  --ztc-bg-bg-7: #59cc75;
+  --ztc-bg-bg-8: #050953;
+  --ztc-bg-bg-9: var(--04-home-page-maincolors, linear-gradient(90deg, #404377 0%, #050953 100%));
+  --ztc-bg-bg-10: #050953;
   --ztc-bg-bg-11: #FB8500;
   --ztc-border-border-1: #E5E7EB;
   --ztc-border-border-2: #dfdcdc;
@@ -564,7 +564,7 @@ Location:
 /*============= COMMON CSS AREA ===============*/
 .heading1 h5 {
   border-radius: 8px;
-  background: rgba(110, 148, 25, 0.1);
+  background: rgba(64, 67, 119, 0.1);
   display: inline-block;
   color: var(--ztc-text-text-4);
   font-family: var(--ztc-family-font1);
@@ -602,7 +602,7 @@ Location:
 
 .heading2 h5 {
   border-radius: 8px;
-  background: rgba(12, 58, 48, 0.1);
+  background: rgba(5, 9, 83, 0.1);
   color: var(--ztc-text-text-5);
   font-family: var(--ztc-family-font1);
   font-size: var(--ztc-font-size-font-s18);
@@ -639,7 +639,7 @@ Location:
 
 .heading3 h5 {
   border-radius: 8px;
-  background: rgba(3, 37, 48, 0.1);
+  background: rgba(5, 9, 83, 0.1);
   color: var(--ztc-text-text-8);
   font-family: var(--ztc-family-font1);
   font-size: var(--ztc-font-size-font-s16);
