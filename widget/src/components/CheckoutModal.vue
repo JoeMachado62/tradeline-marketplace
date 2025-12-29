@@ -334,7 +334,7 @@ const submitOrder = async () => {
 };
 </script>
 
-<style scoped>
+<style>
 .tl-modal-overlay {
   position: fixed;
   top: 0;

@@ -599,7 +599,7 @@ router.post("/setup-test-users", async (req: Request, res: Response) => {
                 password_hash: passwordHash,
                 name: "Test Client",
                 phone: "555-123-4567",
-                excluded_banks: []
+                excluded_banks: "[]"
             }
         });
         

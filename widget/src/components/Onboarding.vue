@@ -87,7 +87,7 @@ const handleSubmit = async () => {
 };
 </script>
 
-<style scoped>
+<style>
 .tl-btn-primary {
   background-color: var(--tl-primary-color, #01061c) !important;
   color: white !important;

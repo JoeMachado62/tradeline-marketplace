@@ -1,9 +1,63 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-gray-50 text-gray-900;
-  }
+:root {
+  /* TradelineRental Brand Colors */
+  --color-primary: #032530;
+  --color-primary-dark: #021a22;
+  --color-primary-light: #053d4d;
+  --color-accent: #F4D445;
+  --color-accent-hover: #e5c63d;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+}
+
+body {
+  background-color: #f8fafc;
+  font-family: "Outfit", sans-serif;
+  color: #1f2937;
+}
+
+/* Login page gradient background */
+.login-bg {
+  background: linear-gradient(135deg, #032530 0%, #053d4d 50%, #032530 100%);
+}
+
+/* Header gradient */
+.header-bg {
+  background: linear-gradient(135deg, #032530 0%, #053d4d 100%);
+}
+
+/* Brand button */
+.btn-brand {
+  background-color: var(--color-primary);
+  color: white;
+  transition: all 0.2s;
+}
+.btn-brand:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* Accent button */
+.btn-accent {
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-accent:hover {
+  background-color: var(--color-accent-hover);
+}
+
+/* Card styling */
+.card {
+  background-color: white;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
 }

@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   root: '.', 
   publicDir: 'public',
-  base: '/broker/', // Assuming we serve it from /broker path in production if integrated, or root if standalone. Let's use /broker to be safe/consistent with admin
+  base: '/broker-portal/', // Must match the path where Express serves this SPA
   server: {
     port: 3003,
     proxy: {

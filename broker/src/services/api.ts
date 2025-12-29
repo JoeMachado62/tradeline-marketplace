@@ -28,7 +28,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       if (!window.location.pathname.includes('/login')) {
          localStorage.removeItem('broker_token');
-         window.location.href = '/broker/login';
+         window.location.href = '/broker-portal/login';
       }
     }
     return Promise.reject(error);

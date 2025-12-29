@@ -7,7 +7,9 @@
     "**/node_modules/**",
     "**/dist/**",
     "**/*.min.js",
-    "**/*.min.css"
+    "**/*.min.css",
+    "admin/src/**/*.css",
+    "portal/src/**/*.css"
   ],
   "dictionaryDefinitions": [],
   "dictionaries": [],

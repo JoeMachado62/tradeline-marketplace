@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <BrowserRouter basename="/broker">
+    <BrowserRouter basename="/broker-portal">
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/settings" element={

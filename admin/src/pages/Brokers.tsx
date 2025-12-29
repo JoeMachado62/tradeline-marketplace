@@ -127,10 +127,10 @@ export default function Brokers() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Brokers</h1>
+        <h1 className="text-2xl font-bold text-[#032530]">Brokers</h1>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 flex items-center"
+          className="bg-[#032530] text-white px-4 py-2 rounded-lg hover:bg-[#021a22] flex items-center"
         >
           <Plus className="w-5 h-5 mr-2" />
           Add Broker
@@ -183,10 +183,10 @@ export default function Brokers() {
                     </td>
                     <td className="p-4">
                         <div className="flex gap-2">
-                             <button onClick={() => setShowViewModal(broker)} className="text-gray-500 hover:text-primary-600">
+                             <button onClick={() => setShowViewModal(broker)} className="text-gray-500 hover:text-[#032530]">
                                 View
                              </button>
-                             <button onClick={() => setEditingBroker(broker)} className="text-gray-500 hover:text-primary-600">
+                             <button onClick={() => setEditingBroker(broker)} className="text-gray-500 hover:text-[#032530]">
                                 Edit
                              </button>
                         </div>
@@ -201,43 +201,44 @@ export default function Brokers() {
 
       {/* CREATE MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Add New Broker</h2>
-              <button onClick={closeCreateModal} className="text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+            <div className="bg-[#032530] px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">Add New Broker</h2>
+              <button onClick={closeCreateModal} className="text-white/70 hover:text-white transition-colors">
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
+            <div className="p-6">
 
             {createdSecret ? (
                 <div className="space-y-4">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                        <h3 className="text-green-800 font-bold flex items-center gap-2">
-                            <CheckCircle className="w-5 h-5"/> Broker Created Successfully
+                    <div className="bg-[#F4D445]/20 border border-[#F4D445] rounded-xl p-4">
+                        <h3 className="text-[#032530] font-bold flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-green-600"/> Broker Created Successfully
                         </h3>
-                        <p className="text-green-700 text-sm mt-1">Please copy the API credentials below. The secret key will not be shown again.</p>
+                        <p className="text-slate-600 text-sm mt-1">Please copy the API credentials below. The secret key will not be shown again.</p>
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">API Secret Key</label>
+                        <label className="block text-sm font-medium text-[#032530] mb-2">API Secret Key</label>
                         <div className="flex gap-2">
-                            <input type="text" readOnly value={createdSecret} className="w-full p-2 bg-gray-50 border rounded font-mono text-sm" />
-                            <button onClick={() => copyToClipboard(createdSecret)} className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm">Copy</button>
+                            <input type="text" readOnly value={createdSecret} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-sm" />
+                            <button onClick={() => copyToClipboard(createdSecret)} className="px-4 py-2 bg-[#032530] text-white rounded-lg hover:bg-[#021a22] text-sm font-medium">Copy</button>
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Widget Embed Code</label>
+                        <label className="block text-sm font-medium text-[#032530] mb-2">Widget Embed Code</label>
                         <textarea 
                             readOnly 
-                            className="w-full p-2 bg-gray-50 border rounded font-mono text-xs h-24"
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-xs h-24"
                             value={brokers.find(b => b.email === newBroker.email)?.api_key ? getEmbedCode(brokers.find(b => b.email === newBroker.email)!.api_key) : 'API_KEY'}
                         />
-                         <p className="text-xs text-gray-500 mt-1">Send this code to the broker to install the widget on their site.</p>
+                         <p className="text-xs text-slate-500 mt-1">Send this code to the broker to install the widget on their site.</p>
                     </div>
 
-                    <button onClick={closeCreateModal} className="w-full bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 mt-4">
+                    <button onClick={closeCreateModal} className="w-full bg-[#F4D445] text-[#032530] py-3 rounded-xl hover:bg-[#e5c63d] font-semibold shadow-lg mt-2">
                         Done
                     </button>
                 </div>
@@ -343,27 +344,29 @@ export default function Brokers() {
                     </button>
                     <button
                       type="submit"
-                      className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+                      className="bg-[#032530] text-white px-4 py-2 rounded-lg hover:bg-[#021a22]"
                     >
                       Create Broker
                     </button>
                   </div>
                 </form>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
       
       {/* EDIT MODAL */}
       {editingBroker && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Edit Broker</h2>
-              <button onClick={() => setEditingBroker(null)} className="text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+            <div className="bg-[#032530] px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">Edit Broker</h2>
+              <button onClick={() => setEditingBroker(null)} className="text-white/70 hover:text-white transition-colors">
                 <XCircle className="w-6 h-6" />
               </button>
             </div>
+            <div className="p-6">
 
             <form onSubmit={handleUpdate} className="space-y-4">
               {error && (
@@ -464,7 +467,7 @@ export default function Brokers() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+                  className="bg-[#032530] text-white px-4 py-2 rounded-lg hover:bg-[#021a22]"
                 >
                   Save Changes
                 </button>
@@ -481,23 +484,25 @@ export default function Brokers() {
                  </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* VIEW DETAILS MODAL */}
       {showViewModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-lg w-full p-6">
-               <div className="flex justify-between items-start mb-6">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
+               <div className="bg-[#032530] px-6 py-4 flex justify-between items-start">
                  <div>
-                    <h2 className="text-xl font-bold">{showViewModal.business_name}</h2>
-                    <p className="text-gray-500 text-sm">Created on {new Date(showViewModal.created_at).toLocaleDateString()}</p>
+                    <h2 className="text-xl font-bold text-white">{showViewModal.business_name}</h2>
+                    <p className="text-white/60 text-sm">Created on {new Date(showViewModal.created_at).toLocaleDateString()}</p>
                  </div>
-                 <button onClick={() => setShowViewModal(null)} className="text-gray-400 hover:text-gray-600">
+                 <button onClick={() => setShowViewModal(null)} className="text-white/70 hover:text-white transition-colors">
                    <XCircle className="w-6 h-6" />
                  </button>
                </div>
+               <div className="p-6">
                
                <div className="space-y-4">
                    <div className="grid grid-cols-2 gap-4 text-sm">
@@ -527,63 +532,64 @@ export default function Brokers() {
                        </div>
                    </div>
                    
-                   <div className="bg-gray-50 p-3 rounded-lg">
-                       <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Integration Details</h4>
-                       <div className="space-y-2">
-                           <div>
-                               <label className="text-xs text-gray-500">API Key</label>
-                               <div className="flex gap-2">
-                                   <code className="text-xs bg-white border p-1 rounded block w-full">{showViewModal.api_key}</code>
-                                   <button onClick={() => copyToClipboard(showViewModal.api_key)} className="text-xs bg-gray-200 px-2 rounded">Copy</button>
-                               </div>
-                           </div>
-                           <div>
-                               <label className="text-xs text-gray-500">Embed Code</label>
-                               <div className="relative">
-                                  <textarea readOnly className="w-full text-xs font-mono p-2 border rounded bg-white h-16" value={getEmbedCode(showViewModal.api_key)} />
-                                  <button onClick={() => copyToClipboard(getEmbedCode(showViewModal.api_key))} className="absolute top-1 right-1 text-xs bg-gray-100 px-1 rounded border">Copy</button>
-                               </div>
-                           </div>
-                       </div>
-                   </div>
-               </div>
-               
-               <div className="mt-6 flex justify-end">
-                   <button onClick={() => setShowViewModal(null)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700">Close</button>
-               </div>
-            </div>
-          </div>
+                   <div className="bg-[#032530]/5 p-4 rounded-xl border border-[#032530]/10">
+                        <h4 className="text-xs font-bold text-[#032530] uppercase mb-3">Integration Details</h4>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block">API Key</label>
+                                <div className="flex gap-2">
+                                    <code className="text-xs bg-white border border-slate-200 p-2 rounded-lg block w-full font-mono">{showViewModal.api_key}</code>
+                                    <button onClick={() => copyToClipboard(showViewModal.api_key)} className="text-xs bg-[#032530] text-white px-3 rounded-lg hover:bg-[#021a22]">Copy</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500 mb-1 block">Embed Code</label>
+                                <div className="relative">
+                                   <textarea readOnly className="w-full text-xs font-mono p-2 border border-slate-200 rounded-lg bg-white h-16" value={getEmbedCode(showViewModal.api_key)} />
+                                   <button onClick={() => copyToClipboard(getEmbedCode(showViewModal.api_key))} className="absolute top-1 right-1 text-xs bg-[#032530] text-white px-2 py-1 rounded hover:bg-[#021a22]">Copy</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="mt-6 flex justify-end">
+                    <button onClick={() => setShowViewModal(null)} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-medium">Close</button>
+                </div>
+             </div>
+           </div>
+         </div>
       )}
 
       {/* RESET CONFIRMATION MODAL */}
       {showResetConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-xl max-w-sm w-full p-6">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
                   {resetSecret ? (
-                      <div className="text-center">
-                          <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                              <CheckCircle className="w-6 h-6 text-green-600" />
+                      <div className="p-6 text-center">
+                          <div className="mx-auto w-14 h-14 bg-[#F4D445]/20 rounded-full flex items-center justify-center mb-4">
+                              <CheckCircle className="w-7 h-7 text-green-600" />
                           </div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-2">Secret Reset Successful</h3>
-                          <p className="text-sm text-gray-600 mb-4">Here is the new API Secret. Copy it now, it won't be shown again.</p>
-                          <div className="bg-gray-50 p-3 rounded border mb-4 break-all font-mono text-sm text-center select-all">
+                          <h3 className="text-lg font-bold text-[#032530] mb-2">Secret Reset Successful</h3>
+                          <p className="text-sm text-slate-600 mb-4">Here is the new API Secret. Copy it now, it won't be shown again.</p>
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 break-all font-mono text-sm text-center select-all">
                               {resetSecret}
                           </div>
-                          <button onClick={closeResetModal} className="w-full bg-primary-600 text-white py-2 rounded-lg">Done</button>
+                          <button onClick={closeResetModal} className="w-full bg-[#F4D445] text-[#032530] py-3 rounded-xl font-semibold hover:bg-[#e5c63d] shadow-lg">Done</button>
                       </div>
                   ) : (
-                      <div className="text-center">
-                          <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                              <AlertCircle className="w-6 h-6 text-red-600" />
+                      <div className="p-6 text-center">
+                          <div className="mx-auto w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                              <AlertCircle className="w-7 h-7 text-red-600" />
                           </div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-2">Reset API Secret?</h3>
-                          <p className="text-sm text-gray-600 mb-6">
-                              Are you sure you want to generate a new API Secret for <strong>{showResetConfirm.name}</strong>? 
+                          <h3 className="text-lg font-bold text-[#032530] mb-2">Reset API Secret?</h3>
+                          <p className="text-sm text-slate-600 mb-6">
+                              Are you sure you want to generate a new API Secret for <strong className="text-[#032530]">{showResetConfirm.name}</strong>? 
                               The old secret will stop working immediately, which may break their live widget.
                           </p>
                           <div className="flex gap-3">
-                              <button onClick={() => setShowResetConfirm(null)} className="flex-1 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
-                              <button onClick={handleResetSecret} className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Yes, Reset</button>
+                              <button onClick={() => setShowResetConfirm(null)} className="flex-1 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 font-medium text-slate-700">Cancel</button>
+                              <button onClick={handleResetSecret} className="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium">Yes, Reset</button>
                           </div>
                       </div>
                   )}

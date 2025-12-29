@@ -246,7 +246,8 @@
           </div>
         </div>
 
-        <!-- Cart View -->
+        <!-- Cart Overlay & Slide-out Panel -->
+        <div v-if="showCart" class="tl-cart-overlay" @click="showCart = false"></div>
         <Cart v-if="showCart" @close="showCart = false" />
       </div>
     </div>
@@ -796,5 +797,22 @@ const cssVariables = computed(() => {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* Cart Overlay */
+.tl-cart-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 </style>

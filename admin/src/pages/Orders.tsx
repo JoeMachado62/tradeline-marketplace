@@ -127,7 +127,7 @@ const Orders: React.FC = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-[#051b41]">Order Fulfillment</h1>
+        <h1 className="text-2xl font-bold text-[#032530]">Order Fulfillment</h1>
         <div className="flex gap-2">
           <span className="text-sm text-gray-500">
             {orders.filter(o => o.status === 'PENDING').length} pending payment
@@ -157,7 +157,7 @@ const Orders: React.FC = () => {
               ) : (
                 orders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3 font-medium text-[#051b41]">
+                    <td className="px-6 py-3 font-medium text-[#032530]">
                       #{order.order_number || order.id.slice(0,8)}
                     </td>
                     <td className="px-6 py-3">{order.broker?.name || 'Direct'}</td>
@@ -216,53 +216,61 @@ const Orders: React.FC = () => {
 
       {/* Payment Modal */}
       {showPaymentModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Record Payment</h2>
-            
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-              <p><strong>Order:</strong> #{selectedOrder.order_number}</p>
-              <p><strong>Customer:</strong> {selectedOrder.customer_name}</p>
-              <p><strong>Amount:</strong> ${(selectedOrder.total_charged / 100).toFixed(2)}</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div className="bg-[#032530] px-6 py-4">
+              <h2 className="text-xl font-bold text-white">Record Payment</h2>
             </div>
+            <div className="p-6">
+              <div className="bg-slate-50 p-4 rounded-xl mb-4 border border-slate-200">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <span className="text-slate-500">Order:</span>
+                  <span className="font-semibold text-[#032530]">#{selectedOrder.order_number}</span>
+                  <span className="text-slate-500">Customer:</span>
+                  <span className="font-medium">{selectedOrder.customer_name}</span>
+                  <span className="text-slate-500">Amount:</span>
+                  <span className="font-bold text-lg text-[#032530]">${(selectedOrder.total_charged / 100).toFixed(2)}</span>
+                </div>
+              </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-              <select 
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full border rounded-lg p-2"
-              >
-                <option value="ZELLE">Zelle</option>
-                <option value="ACH">ACH Transfer</option>
-                <option value="WIRE">Wire Transfer</option>
-                <option value="CASH">Cash</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Payment Method</label>
+                <select 
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-3 focus:border-[#032530] focus:ring-2 focus:ring-[#032530]/10 outline-none"
+                >
+                  <option value="ZELLE">Zelle</option>
+                  <option value="ACH">ACH Transfer</option>
+                  <option value="WIRE">Wire Transfer</option>
+                  <option value="CASH">Cash</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mb-4 text-sm">
-              <strong>⚠️ Important:</strong> Only mark as paid after confirming the payment has been received in your account.
-            </div>
+              <div className="bg-[#F4D445]/20 border border-[#F4D445] p-4 rounded-xl mb-4 text-sm">
+                <strong className="text-[#032530]">⚠️ Important:</strong> <span className="text-slate-700">Only mark as paid after confirming the payment has been received in your account.</span>
+              </div>
 
-            <div className="flex gap-3">
-              <button 
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  setSelectedOrder(null);
-                }}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
-                disabled={processingPayment}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleMarkAsPaid}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                disabled={processingPayment}
-              >
-                {processingPayment ? 'Processing...' : 'Confirm Payment Received'}
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setSelectedOrder(null);
+                  }}
+                  className="flex-1 px-4 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 font-medium transition"
+                  disabled={processingPayment}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleMarkAsPaid}
+                  className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 font-semibold transition shadow-md"
+                  disabled={processingPayment}
+                >
+                  {processingPayment ? 'Processing...' : 'Confirm Payment'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -270,54 +278,55 @@ const Orders: React.FC = () => {
 
       {/* Order Details Modal */}
       {selectedOrder && !showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Order #{selectedOrder.order_number}</h2>
-              <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-gray-600">
-                ✕
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <div className="bg-[#032530] px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">Order #{selectedOrder.order_number}</h2>
+              <button onClick={() => setSelectedOrder(null)} className="text-white/60 hover:text-white text-2xl w-8 h-8 rounded-full hover:bg-white/10 transition">
+                ×
               </button>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <p className="text-sm text-gray-500">Customer</p>
-                <p className="font-medium">{selectedOrder.customer_name}</p>
-                <p className="text-sm">{selectedOrder.customer_email}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Broker</p>
-                <p className="font-medium">{selectedOrder.broker?.name || 'Direct'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Status</p>
-                {getStatusBadge(selectedOrder.status, selectedOrder.payment_status)}
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total</p>
-                <p className="font-bold text-lg">${(selectedOrder.total_charged / 100).toFixed(2)}</p>
-              </div>
-            </div>
-
-            <h3 className="font-semibold mb-2">Order Items</h3>
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              {selectedOrder.items?.map((item, idx) => (
-                <div key={idx} className="flex justify-between py-2 border-b last:border-0">
-                  <span>{item.bank_name} - ${item.credit_limit?.toLocaleString()}</span>
-                  <span className="font-medium">${(item.customer_price / 100).toFixed(2)} × {item.quantity}</span>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-slate-50 p-4 rounded-xl">
+                  <p className="text-sm text-slate-500 mb-1">Customer</p>
+                  <p className="font-semibold text-[#032530]">{selectedOrder.customer_name}</p>
+                  <p className="text-sm text-slate-600">{selectedOrder.customer_email}</p>
                 </div>
-              )) || <p className="text-gray-500">No items</p>}
-            </div>
+                <div className="bg-slate-50 p-4 rounded-xl">
+                  <p className="text-sm text-slate-500 mb-1">Broker</p>
+                  <p className="font-semibold text-[#032530]">{selectedOrder.broker?.name || 'Direct'}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-xl">
+                  <p className="text-sm text-slate-500 mb-1">Status</p>
+                  {getStatusBadge(selectedOrder.status, selectedOrder.payment_status)}
+                </div>
+                <div className="bg-[#032530] p-4 rounded-xl">
+                  <p className="text-sm text-white/70 mb-1">Total</p>
+                  <p className="font-bold text-2xl text-[#F4D445]">${(selectedOrder.total_charged / 100).toFixed(2)}</p>
+                </div>
+              </div>
 
-            {selectedOrder.status === 'PENDING' && selectedOrder.payment_status !== 'PAID' && (
-              <button 
-                onClick={() => setShowPaymentModal(true)}
-                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
-              >
-                <DollarSign className="w-4 h-4 inline mr-2" />
-                Mark as Paid
-              </button>
-            )}
+              <h3 className="font-semibold text-[#032530] mb-3">Order Items</h3>
+              <div className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-200">
+                {selectedOrder.items?.map((item, idx) => (
+                  <div key={idx} className="flex justify-between py-3 border-b border-slate-200 last:border-0">
+                    <span className="text-slate-700">{item.bank_name} - ${item.credit_limit?.toLocaleString()}</span>
+                    <span className="font-semibold text-[#032530]">${(item.customer_price / 100).toFixed(2)} × {item.quantity}</span>
+                  </div>
+                )) || <p className="text-slate-500">No items</p>}
+              </div>
+
+              {selectedOrder.status === 'PENDING' && selectedOrder.payment_status !== 'PAID' && (
+                <button 
+                  onClick={() => setShowPaymentModal(true)}
+                  className="w-full bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700 font-semibold shadow-md transition flex items-center justify-center gap-2"
+                >
+                  <DollarSign className="w-5 h-5" />
+                  Mark as Paid
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -105,7 +105,7 @@ const handleCheckout = () => {
 };
 </script>
 
-<style scoped>
+<style>
 .tl-cart {
   position: fixed;
   top: 0;
