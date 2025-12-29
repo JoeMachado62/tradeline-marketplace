@@ -5,7 +5,16 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+      },
+      colors: {
+        primary: '#032530',
+        accent: '#F4D445',
+        secondary: '#7C9F37',
+      }
+    },
   },
   plugins: [],
 }

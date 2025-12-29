@@ -27,7 +27,7 @@
       <div class="row">
         <div class="col-lg-12 m-auto">
           <div class="inner-header text-center">
-            <h2 class="text-anime-style-3">Tradeline Inventory</h2>
+            <h2 class="text-anime-style-3">Inventory & Pricing</h2>
             <div class="space24"></div>
             <a href="/">Home <i class="fa-solid fa-angle-right"></i> <span>Browse Inventory</span></a>
           </div>
@@ -41,7 +41,7 @@
   <div class="inventory-section-area sp2">
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 m-auto">
+        <div class="col-lg-12">
           <div class="heading3 text-center">
             <h5>Our Current Inventory</h5>
             <div class="space16"></div>
@@ -64,17 +64,104 @@
   </div>
   <!-- ===== INVENTORY AREA ENDS ======= -->
 
-<%- contentFor('extra_javascript') %>
-<script>
-  // Configuration for the Tradeline Widget
-  window.TL_WIDGET_CONFIG = {
-    // API URL will be the current domain
-    apiUrl: window.location.origin + '/api/public',
-    apiKey: 'DEFAULT_WIDGET_KEY', // This can be moved to server-side rendering variable if needed
-    theme: {
-      primaryColor: '#032530',
-      accentColor: '#F4D445'
-    }
-  };
-</script>
-<script src="/widget/tradeline-widget.iife.js"></script>
+  <!-- ===== PRICING AREA STARTS ======= -->
+  <div class="pricing-section-area sp2" style="background-image: url(/img/all-images/bg/bg4.png); background-position: center; background-repeat: no-repeat; background-size: cover;">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 m-auto">
+          <div class="heading3 text-center">
+            <h5>Pricing Plans</h5>
+            <div class="space16"></div>
+            <h2 class="text-anime-style-3">Funding Consulting Packages</h2>
+            <div class="space16"></div>
+            <p>Choose the consulting plan that fits your business needs.</p>
+          </div>
+        </div>
+      </div>
+      <div class="space30"></div>
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="tab-content">
+            <div id="monthly">
+              <div class="row">
+                <!-- Tier 1 -->
+                <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
+                  <div class="single-pricing-area">
+                    <div class="pricing-box">
+                      <h3>Starter Funding</h3>
+                      <div class="space26"></div>
+                      <p>Perfect for new businesses looking for initial capital injections.</p>
+                      <div class="space38"></div>
+                      <h2>$499 <span>/Per Month</span> <img src="/img/elements/elements19.png" alt="" class="elements19 keyframe5" /></h2>
+                      <div class="space32"></div>
+                      <ul>
+                        <li><img src="/img/icons/arrow1.svg" alt="" />Funding up to $20,000</li>
+                        <li><img src="/img/icons/arrow1.svg" alt="" />Credit Analysis</li>
+                        <li><img src="/img/icons/arrow1.svg" alt="" />Basic Consulting</li>
+                      </ul>
+                      <div class="space32"></div>
+                      <div class="btn-area1">
+                        <a href="#" class="vl-btn3 book-call-trigger">Get Started</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Tier 2 -->
+                <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
+                  <div class="single-pricing-area active">
+                    <div class="pricing-box">
+                      <h3>Growth Funding</h3>
+                      <div class="space26"></div>
+                      <p>Designed for established businesses ready to scale operations.</p>
+                      <div class="space38"></div>
+                      <h2>$799 <span>/Per Month</span> <img src="/img/elements/elements19.png" alt="" class="elements19 keyframe5" /></h2>
+                      <div class="space32"></div>
+                      <ul>
+                        <li><img src="/img/icons/arrow2.svg" alt="" />Funding up to $50,000</li>
+                        <li><img src="/img/icons/arrow2.svg" alt="" />Advanced Credit Building</li>
+                        <li><img src="/img/icons/arrow2.svg" alt="" />Business Structuring</li>
+                        <li><img src="/img/icons/arrow2.svg" alt="" />Priority Support</li>
+                      </ul>
+                      <div class="space32"></div>
+                      <div class="btn-area1">
+                        <a href="#" class="vl-btn3 book-call-trigger">Get Started</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Tier 3 -->
+                <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
+                  <div class="single-pricing-area">
+                    <div class="pricing-box">
+                      <h3>Premium Funding</h3>
+                      <div class="space26"></div>
+                      <p>Comprehensive solutions for maximum capital acquisition.</p>
+                      <div class="space38"></div>
+                      <h2>$2K* <span>/Per Month</span> <img src="/img/elements/elements19.png" alt="" class="elements19 keyframe5" /></h2>
+                      <div class="space32"></div>
+                      <ul>
+                        <li><img src="/img/icons/arrow1.svg" alt="" />Funding $100,000+</li>
+                        <li><img src="/img/icons/arrow1.svg" alt="" />Full Corporate Strategy</li>
+                        <li><img src="/img/icons/arrow1.svg" alt="" />Dedicated Funding Manager</li>
+                        <li><img src="/img/icons/arrow1.svg" alt="" />Unlimited Consultation</li>
+                      </ul>
+                      <div class="space32"></div>
+                      <div class="btn-area1">
+                        <a href="#" class="vl-btn3 book-call-trigger">Get Started</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== PRICING AREA ENDS ======= -->
+
+  <!-- Tradeline Widget Scripts (external to comply with CSP) -->
+  <script src="/js/widget-config.js"></script>
+  <script src="/widget/tradeline-widget.iife.js"></script>
+

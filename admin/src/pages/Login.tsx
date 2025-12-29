@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
@@ -23,8 +24,9 @@ const Login: React.FC = () => {
         localStorage.setItem('admin_user', JSON.stringify(data.admin));
         navigate('/');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ error: string }>;
+      setError(error.response?.data?.error || 'Login failed');
     } finally {
       setLoading(false);
     }

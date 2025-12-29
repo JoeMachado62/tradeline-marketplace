@@ -12,11 +12,11 @@
           <div class="vl-main-menu text-center">
             <nav class="vl-mobile-menu-active">
               <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/inventory">Browse Inventory</a></li>
-                <li><a href="/broker">Broker Channel</a></li>
-                <li><a href="/about">About Us</a></li>
-                <li><a href="/contact">Contact</a></li>
+                <li><a href="/" class="<%= typeof currentPath !== 'undefined' && (currentPath === '/' || currentPath === '') ? 'active' : '' %>">Home</a></li>
+                <li><a href="/inventory" class="<%= typeof currentPath !== 'undefined' && currentPath === '/inventory' ? 'active' : '' %>">Browse Inventory</a></li>
+                <li><a href="/broker" class="<%= typeof currentPath !== 'undefined' && currentPath === '/broker' ? 'active' : '' %>">Broker Channel</a></li>
+                <li><a href="/about" class="<%= typeof currentPath !== 'undefined' && currentPath === '/about' ? 'active' : '' %>">About Us</a></li>
+                <li><a href="/contact" class="<%= typeof currentPath !== 'undefined' && currentPath === '/contact' ? 'active' : '' %>">Contact</a></li>
               </ul>
             </nav>
           </div>

@@ -55,9 +55,32 @@
     <script src="/js/plugins/slick-slider.js"></script>
     <script src="/js/plugins/circle-progress.js"></script>
     <script src="/js/plugins/swiper.js"></script>
+    <script src="/js/case-studies.js"></script>
     <script src="/js/main.js"></script>
+    <script src="/js/booking.js"></script>
 
-    <%- extra_javascript %>
+    <%- locals.extra_javascript || '' %>
+
+    <%- script %>
+
+
+    <!-- Booking Modal (GoHighLevel Calendar Embed) -->
+    <div id="bookingModal" class="booking-modal-overlay">
+      <div class="booking-modal-container">
+        <button class="booking-modal-close">&times;</button>
+        <div class="booking-modal-header">
+          <h3>Schedule Your Free Consultation</h3>
+          <p>Pick a time that works best for you</p>
+        </div>
+        <div class="booking-modal-body">
+          <iframe 
+            src="https://app.creditservicesus.com/widget/booking/yI2nsy6bFTVvmYStBGNI" 
+            scrolling="no" 
+            id="ghl-booking-iframe">
+          </iframe>
+        </div>
+      </div>
+    </div>
 
 </body>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AxiosError } from 'axios';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
 import api from '../services/api';
@@ -33,8 +34,9 @@ const ResetPassword: React.FC = () => {
         } else {
           setError('This reset link has expired. Please request a new one.');
         }
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Invalid or expired reset link.');
+      } catch (err: unknown) {
+        const error = err as AxiosError<{ error: string }>;
+        setError(error.response?.data?.error || 'Invalid or expired reset link.');
       } finally {
         setValidating(false);
       }
@@ -65,8 +67,9 @@ const ResetPassword: React.FC = () => {
       setTimeout(() => {
         navigate('/login?reset=1');
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to reset password');
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ error: string }>;
+      setError(error.response?.data?.error || 'Failed to reset password');
     } finally {
       setLoading(false);
     }

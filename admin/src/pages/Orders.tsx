@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
 import api from '../services/api';
 import { DollarSign, Eye, CheckCircle, XCircle, Clock, AlertCircle, Trash2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+interface OrderItem {
+  bank_name: string;
+  credit_limit: number;
+  customer_price: number;
+  quantity: number;
+}
 
 interface Order {
   id: string;
@@ -12,7 +21,7 @@ interface Order {
   status: string;
   payment_status: string;
   created_at: string;
-  items: any[];
+  items: OrderItem[];
 }
 
 const Orders: React.FC = () => {
@@ -52,7 +61,8 @@ const Orders: React.FC = () => {
       if (data.success) {
         setOrders(orders.filter(o => o.id !== order.id));
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ error: string }>;
       alert(error.response?.data?.error || 'Failed to delete order');
     } finally {
       setDeletingId(null);
@@ -78,7 +88,8 @@ const Orders: React.FC = () => {
         setShowPaymentModal(false);
         setSelectedOrder(null);
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ error: string }>;
       alert(error.response?.data?.error || 'Failed to mark as paid');
     } finally {
       setProcessingPayment(false);
@@ -87,7 +98,7 @@ const Orders: React.FC = () => {
 
 
   const getStatusBadge = (status: string, paymentStatus: string) => {
-    const statusConfig: Record<string, { bg: string; text: string; icon: any }> = {
+    const statusConfig: Record<string, { bg: string; text: string; icon: LucideIcon }> = {
       'PENDING': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: Clock },
       'PROCESSING': { bg: 'bg-blue-100', text: 'text-blue-800', icon: Clock },
       'COMPLETED': { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle },
@@ -290,7 +301,7 @@ const Orders: React.FC = () => {
 
             <h3 className="font-semibold mb-2">Order Items</h3>
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              {selectedOrder.items?.map((item: any, idx: number) => (
+              {selectedOrder.items?.map((item, idx) => (
                 <div key={idx} className="flex justify-between py-2 border-b last:border-0">
                   <span>{item.bank_name} - ${item.credit_limit?.toLocaleString()}</span>
                   <span className="font-medium">${(item.customer_price / 100).toFixed(2)} × {item.quantity}</span>

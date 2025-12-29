@@ -3,9 +3,25 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Building, Info, PlayCircle } from 'lucide-react';
 import api from '../services/api';
 
+interface OrderItem {
+  id: string;
+  bank_name: string;
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  order_number: string;
+  created_at: string;
+  total_charged_usd: string | number;
+  status: string;
+  payment_status: string;
+  items: OrderItem[];
+}
+
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -117,7 +133,7 @@ const OrderDetail: React.FC = () => {
                     <h3 className="font-medium text-gray-900">Order Items</h3>
                 </div>
                 <ul className="divide-y divide-gray-200">
-                    {order.items.map((item: any) => (
+                    {order.items.map((item) => (
                         <li key={item.id} className="p-6 flex justify-between items-center">
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">

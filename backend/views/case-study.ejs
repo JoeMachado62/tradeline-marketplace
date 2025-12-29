@@ -1,0 +1,208 @@
+<%- contentFor('html_attribute') %>
+
+<%- contentFor('body_attribute') %>
+
+<%- contentFor('extra_css') %>
+<style>
+  .case-study-hero {
+    background: linear-gradient(135deg, #061D19 0%, #0c3831 100%);
+    padding: 180px 0 80px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 0;
+  }
+  
+  .case-study-hero::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  
+  .case-study-hero .category-badge {
+    display: inline-block;
+    background: rgba(244, 212, 69, 0.2);
+    color: #F4D445;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(244, 212, 69, 0.3);
+  }
+  
+  .case-study-hero h1 {
+    color: #fff;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 20px;
+  }
+  
+  .case-study-content {
+    padding: 80px 0;
+    background: #fff;
+  }
+  
+  .case-study-content .highlight-quote {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 5px solid #F4D445;
+    padding: 30px 40px;
+    margin: 0 0 40px;
+    border-radius: 0 12px 12px 0;
+    font-size: 22px;
+    font-style: italic;
+    color: #061D19;
+    line-height: 1.6;
+  }
+  
+  .case-study-section {
+    margin-bottom: 40px;
+  }
+  
+  .case-study-section h3 {
+    color: #061D19;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .case-study-section h3 .icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #061D19 0%, #0c3831 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #F4D445;
+    font-size: 20px;
+  }
+  
+  .case-study-section p {
+    font-size: 18px;
+    line-height: 1.8;
+    color: #4a5568;
+  }
+  
+  .case-study-cta {
+    background: linear-gradient(135deg, #061D19 0%, #0c3831 100%);
+    padding: 60px;
+    border-radius: 20px;
+    text-align: center;
+    margin-top: 60px;
+  }
+  
+  .case-study-cta h3 {
+    color: #fff;
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  
+  .case-study-cta p {
+    color: rgba(255,255,255,0.8);
+    font-size: 18px;
+    margin-bottom: 30px;
+  }
+  
+  .case-study-cta .vl-btn3 {
+    background: #F4D445;
+    color: #061D19;
+    padding: 15px 40px;
+    font-weight: 700;
+  }
+  
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    margin-bottom: 30px;
+    transition: color 0.3s;
+  }
+  
+  .back-link:hover {
+    color: #fff;
+  }
+  
+  @media (max-width: 768px) {
+    .case-study-hero h1 {
+      font-size: 32px;
+    }
+    .case-study-content .highlight-quote {
+      font-size: 18px;
+      padding: 20px 25px;
+    }
+  }
+</style>
+
+<%- contentFor('content') %>
+  <%- include('partials/header/navbar3') %>
+
+  <!-- Hero Section -->
+  <div class="case-study-hero">
+    <div class="container">
+      <a href="/#projects" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Success Stories
+      </a>
+      <span class="category-badge"><%= caseStudy.category %></span>
+      <h1><%= caseStudy.title %></h1>
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div class="case-study-content">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-10 m-auto">
+          <blockquote class="highlight-quote">
+            "<%= caseStudy.quote %>"
+          </blockquote>
+          
+          <div class="case-study-section">
+            <h3>
+              <span class="icon"><i class="fa-solid fa-flag"></i></span>
+              The Challenge
+            </h3>
+            <p><%= caseStudy.challenge %></p>
+          </div>
+          
+          <div class="case-study-section">
+            <h3>
+              <span class="icon"><i class="fa-solid fa-lightbulb"></i></span>
+              The Solution
+            </h3>
+            <p><%= caseStudy.solution %></p>
+          </div>
+          
+          <div class="case-study-section">
+            <h3>
+              <span class="icon"><i class="fa-solid fa-trophy"></i></span>
+              The Result
+            </h3>
+            <p><%= caseStudy.result %></p>
+          </div>
+          
+          <div class="case-study-cta">
+            <h3>Ready to Write Your Success Story?</h3>
+            <p>Join thousands of clients who have transformed their credit and achieved their financial goals.</p>
+            <a href="/contact" class="vl-btn3">Get Started Today</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

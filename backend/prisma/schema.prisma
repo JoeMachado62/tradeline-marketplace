@@ -4,7 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  // Using SQLite for local development
+  // For Hostinger production, change to "mysql" and update DATABASE_URL
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -15,7 +17,7 @@ model Broker {
   business_name         String?
   email                 String    @unique
   phone                 String?
-  business_address      String?   @db.Text
+  business_address      String?
   
   // Authentication
   api_key               String    @unique
@@ -26,16 +28,16 @@ model Broker {
   revenue_share_percent Float     @default(10) // 10-25% of base price
   
   // Markup Settings (Broker controlled)
-  markup_type           MarkupType @default(PERCENTAGE)
+  markup_type           String @default("PERCENTAGE") // PERCENTAGE or FIXED
   markup_value          Float     @default(0) // Broker's additional markup
 
   // Account Status
-  status                BrokerStatus @default(PENDING)
+  status                String @default("PENDING") // PENDING, ACTIVE, SUSPENDED, INACTIVE
   approved_by           String?   // Admin who approved
   approved_at           DateTime?
 
   // Metadata
-  notes                 String?   @db.Text
+  notes                 String?
   created_at            DateTime  @default(now())
   updated_at            DateTime  @updatedAt
 
@@ -58,8 +60,8 @@ model Client {
   name              String?
   phone             String?
   date_of_birth     DateTime?
-  address           String?        @db.Text
-  excluded_banks    Json           @default("[]") // Banks found in credit report
+  address           String?
+  excluded_banks    String         @default("[]") // JSON string - Banks found in credit report
   
   // Identity Documents
   id_document_path  String?        // Driver's license / Passport / State ID path
@@ -67,7 +69,7 @@ model Client {
   documents_verified Boolean       @default(false)
   
   // Agreement
-  signature         String?        @db.Text
+  signature         String?
   signed_agreement_date DateTime?
   
   // Password Reset
@@ -90,8 +92,8 @@ model CreditReport {
   file_path         String   // Local path or S3 key
   status            String   // PENDING, PARSED, FAILED
   
-  parsed_data       Json?    // Full AI extraction result
-  creditors_found   Json     @default("[]") // Extracted list
+  parsed_data       String?  // JSON string - Full AI extraction result
+  creditors_found   String   @default("[]") // JSON string - Extracted list
   
   created_at        DateTime @default(now())
 }
@@ -116,8 +118,8 @@ model Order {
   // Payment Information
   stripe_session_id       String?
   stripe_payment_intent   String?
-  payment_status          PaymentStatus @default(PENDING)
-  payment_method          PaymentMethod @default(MANUAL)
+  payment_status          String @default("PENDING") // PENDING, PROCESSING, PAID, SUCCEEDED, FAILED, REFUNDED
+  payment_method          String @default("MANUAL") // ACH, WIRE, ZELLE, CHECK, PAYPAL, CASH, MANUAL, STRIPE, OTHER
 
   // Pricing Breakdown (all amounts in USD cents)
   subtotal_base           Int      // Sum of TradelineSupply prices
@@ -131,7 +133,7 @@ model Order {
   tradeline_order_status  String?  // Status from TradelineSupply
 
   // Order Status
-  status                  OrderStatus @default(PENDING)
+  status                  String @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, REFUNDED, CANCELLED
 
   // Timestamps
   created_at              DateTime  @default(now())
@@ -194,7 +196,7 @@ model CommissionRecord {
   total_commission      Int       // Total broker earns
 
   // Payout Status
-  payout_status         PayoutStatus @default(PENDING)
+  payout_status         String @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
   payout_id             String?
   payout                Payout?   @relation(fields: [payout_id], references: [id])
 
@@ -222,12 +224,12 @@ model Payout {
   total_amount          Int       // Total payout amount
 
   // Payment Details
-  payment_method        PaymentMethod @default(ACH)
-  payment_details       Json?     // Bank details, etc.
+  payment_method        String @default("ACH") // ACH, WIRE, ZELLE, CHECK, PAYPAL, CASH, MANUAL, STRIPE, OTHER
+  payment_details       String?   // JSON string - Bank details, etc.
   transaction_id        String?   // External payment reference
 
   // Status
-  status                PayoutStatus @default(PENDING)
+  status                String @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
   processed_at          DateTime?
   notes                 String?
 
@@ -247,7 +249,7 @@ model Analytics {
   id                    String    @id @default(uuid())
   broker_id             String
   broker                Broker    @relation(fields: [broker_id], references: [id])
-  date                  DateTime  @db.Date
+  date                  DateTime
 
   // Widget Metrics
   widget_loads          Int       @default(0)
@@ -282,11 +284,11 @@ model WebhookLog {
   order_id              String?
   order                 Order?    @relation(fields: [order_id], references: [id])
 
-  source                WebhookSource // STRIPE or TRADELINE_SUPPLY
+  source                String // STRIPE or TRADELINE_SUPPLY
   event_type            String
-  payload               Json
-  response              Json?
-  status                WebhookStatus
+  payload               String    // JSON string - webhook payload
+  response              String?   // JSON string - webhook response
+  status                String // RECEIVED, PROCESSING, PROCESSED, FAILED
   error_message         String?
 
   created_at            DateTime  @default(now())
@@ -308,7 +310,7 @@ model ActivityLog {
   entity_type           String?   // e.g., "Order", "Broker"
   entity_id             String?
 
-  metadata              Json?     // Additional context
+  metadata              String?   // JSON string - Additional context
   ip_address            String?
   user_agent            String?
 
@@ -323,7 +325,7 @@ model ActivityLog {
 model PricingCache {
   id                    String    @id @default(uuid())
   cache_key             String    @unique
-  data                  Json
+  data                  String    // JSON string - cached data
   expires_at            DateTime
   created_at            DateTime  @default(now())
 
@@ -337,7 +339,7 @@ model Admin {
   email                 String    @unique
   password_hash         String
   name                  String
-  role                  AdminRole @default(STAFF)
+  role                  String @default("STAFF") // SUPER_ADMIN, ADMIN, STAFF, SUPPORT
 
   is_active             Boolean   @default(true)
   last_login            DateTime?
@@ -348,75 +350,6 @@ model Admin {
   @@index([email])
 }
 
-// ENUMS
-
-enum MarkupType {
-  PERCENTAGE
-  FIXED
-}
-
-enum BrokerStatus {
-  PENDING
-  ACTIVE
-  SUSPENDED
-  INACTIVE
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  REFUNDED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  PROCESSING
-  PAID
-  SUCCEEDED
-  FAILED
-  REFUNDED
-}
-
-enum PayoutStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  CANCELLED
-}
-
-enum PaymentMethod {
-  ACH
-  WIRE
-  ZELLE
-  CHECK
-  PAYPAL
-  CASH
-  MANUAL
-  STRIPE
-  OTHER
-}
-
-enum WebhookSource {
-  STRIPE
-  TRADELINE_SUPPLY
-}
-
-enum WebhookStatus {
-  RECEIVED
-  PROCESSING
-  PROCESSED
-  FAILED
-}
-
-enum AdminRole {
-  SUPER_ADMIN
-  ADMIN
-  STAFF
-  SUPPORT
-}
-
-
+// Note: Enums converted to String types for SQLite compatibility
+// Valid values are documented in comments on each field
+// When deploying to MySQL/PostgreSQL, these can be converted back to enums

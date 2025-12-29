@@ -2,9 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { Users, ShoppingCart, DollarSign, Activity } from 'lucide-react';
 import api from '../services/api';
 
+interface DashboardStats {
+  brokers: number;
+  active_brokers: number;
+  orders_total: number;
+  revenue_platform: number;
+}
+
+interface Order {
+  id: string;
+  order_number?: string;
+  broker?: { name: string };
+  created_at: string;
+  status: string;
+  total_charged: number;
+}
+
 const Dashboard: React.FC = () => {
-  const [stats, setStats] = useState<any>(null);
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -75,7 +91,7 @@ const Dashboard: React.FC = () => {
                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No recent orders found.</td>
                 </tr>
               ) : (
-                recentOrders.map((order: any) => (
+                recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 font-medium text-[#051b41]">#{order.order_number || order.id.slice(0,8)}</td>
                     <td className="px-6 py-3">{order.broker?.name || 'Direct'}</td>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
 import api from '../services/api';
 import { Plus, CheckCircle, XCircle, RotateCcw, AlertCircle } from 'lucide-react';
 
@@ -59,8 +60,9 @@ export default function Brokers() {
       setBrokers([response.data.broker, ...brokers]);
       setCreatedSecret(response.data.api_secret);
       // Don't close modal immediately, show success state
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create broker');
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ error: string }>;
+      setError(error.response?.data?.error || 'Failed to create broker');
     }
   };
   
@@ -83,8 +85,9 @@ export default function Brokers() {
         // Update local list
         setBrokers(brokers.map(b => b.id === editingBroker.id ? { ...response.data.broker, status: response.data.broker.status.toLowerCase() } : b));
         setEditingBroker(null);
-    } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to update broker');
+    } catch (err: unknown) {
+        const error = err as AxiosError<{ error: string }>;
+        setError(error.response?.data?.error || 'Failed to update broker');
     }
   };
 
@@ -94,8 +97,9 @@ export default function Brokers() {
         const response = await api.post(`/admin/brokers/${showResetConfirm.id}/reset-secret`);
         setResetSecret(response.data.api_secret);
         // Keep modal open to show secret
-    } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to reset secret');
+    } catch (err: unknown) {
+        const error = err as AxiosError<{ error: string }>;
+        setError(error.response?.data?.error || 'Failed to reset secret');
     }
   };
 
@@ -440,7 +444,7 @@ export default function Brokers() {
                       <select 
                           className="w-full border rounded-lg p-2"
                           value={editingBroker.status}
-                          onChange={(e) => setEditingBroker({...editingBroker, status: e.target.value as any})}
+                          onChange={(e) => setEditingBroker({...editingBroker, status: e.target.value as Broker['status']})}
                       >
                           <option value="active">Active</option>
                           <option value="pending">Pending</option>

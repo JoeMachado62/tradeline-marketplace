@@ -17,7 +17,7 @@ const ForgotPassword: React.FC = () => {
     try {
       await api.post('/portal/forgot-password', { email });
       setSuccess(true);
-    } catch (err: any) {
+    } catch {
       // Don't reveal if email exists or not for security
       setSuccess(true); // Always show success to prevent email enumeration
     } finally {
