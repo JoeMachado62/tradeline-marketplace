@@ -1,109 +1,87 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: ${DB_USER:-tradeline}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME:-tradeline_marketplace}
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - tradeline_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-tradeline}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    networks:
-      - tradeline_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Backend API
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: postgresql://${DB_USER:-tradeline}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-tradeline_marketplace}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379
-      TRADELINE_CONSUMER_KEY: ${TRADELINE_CONSUMER_KEY}
-      TRADELINE_CONSUMER_SECRET: ${TRADELINE_CONSUMER_SECRET}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
-      JWT_SECRET: ${JWT_SECRET}
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-    ports:
-      - "3000:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - tradeline_network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Widget CDN
-  widget:
-    build:
-      context: ./widget
-      dockerfile: Dockerfile
-    networks:
-      - tradeline_network
-    restart: unless-stopped
-
-  # Nginx Reverse Proxy
+  # Nginx reverse proxy
   nginx:
     image: nginx:alpine
+    container_name: tradeline-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - nginx_cache:/var/cache/nginx
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - backend
-      - widget
-    networks:
-      - tradeline_network
+      - lux-worker
     restart: unless-stopped
+    networks:
+      - tradeline-network
 
-volumes:
-  postgres_data:
-  redis_data:
-  nginx_cache:
+  # Node.js Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tradeline-backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - LUX_WORKER_URL=http://lux-worker:8765
+      - LUX_SOCKET_URL=ws://lux-worker:8765
+    volumes:
+      - ./backend/prisma:/app/prisma
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - tradeline-network
+
+  # Lux Python Worker
+  lux-worker:
+    build:
+      context: ./lux-worker
+      dockerfile: Dockerfile
+    container_name: tradeline-lux
+    environment:
+      - OAGI_API_KEY=${OAGI_API_KEY}
+      - LUX_WORKER_HOST=0.0.0.0
+      - LUX_WORKER_PORT=8765
+      - NODE_CALLBACK_URL=http://backend:3000/api/lux/callback
+    restart: unless-stopped
+    networks:
+      - tradeline-network
+
+  # Redis for session storage and job queue
+  redis:
+    image: redis:7-alpine
+    container_name: tradeline-redis
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - tradeline-network
+
+  # Certbot for SSL certificates
+  certbot:
+    image: certbot/certbot
+    container_name: tradeline-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 networks:
-  tradeline_network:
+  tradeline-network:
     driver: bridge
+
+volumes:
+  redis-data:

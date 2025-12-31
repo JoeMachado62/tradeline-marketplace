@@ -4,49 +4,34 @@ generator client {
 }
 
 datasource db {
-  // Using SQLite for local development
-  // For Hostinger production, change to "mysql" and update DATABASE_URL
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-// Broker/Affiliate model with corrected commission structure
 model Broker {
-  id                    String    @id @default(uuid())
+  id                    String             @id @default(uuid())
   name                  String
   business_name         String?
-  email                 String    @unique
+  email                 String             @unique
   phone                 String?
   business_address      String?
-  
-  // Authentication
-  api_key               String    @unique
-  api_secret            String    // For widget authentication (hashed)
-  password_hash         String?   // For portal login (separate from API secret)
-
-  // Commission Settings (Admin controlled)
-  revenue_share_percent Float     @default(10) // 10-25% of base price
-  
-  // Markup Settings (Broker controlled)
-  markup_type           String @default("PERCENTAGE") // PERCENTAGE or FIXED
-  markup_value          Float     @default(0) // Broker's additional markup
-
-  // Account Status
-  status                String @default("PENDING") // PENDING, ACTIVE, SUSPENDED, INACTIVE
-  approved_by           String?   // Admin who approved
+  api_key               String             @unique
+  api_secret            String
+  password_hash         String?
+  revenue_share_percent Float              @default(10)
+  markup_type           String             @default("PERCENTAGE")
+  markup_value          Float              @default(0)
+  status                String             @default("PENDING")
+  approved_by           String?
   approved_at           DateTime?
-
-  // Metadata
-  notes                 String?
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
-
-  // Relations
-  orders                Order[]
-  analytics             Analytics[]
-  payouts               Payout[]
-  commission_records    CommissionRecord[]
+  notes                 String?            @db.Text
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
   activity_logs         ActivityLog[]
+  analytics             Analytics[]
+  commission_records    CommissionRecord[]
+  orders                Order[]
+  payouts               Payout[]
 
   @@index([email])
   @@index([api_key])
@@ -54,96 +39,69 @@ model Broker {
 }
 
 model Client {
-  id                String         @id @default(uuid())
-  email             String         @unique
-  password_hash     String         @default("") // Empty default for migration, check in app
-  name              String?
-  phone             String?
-  date_of_birth     DateTime?
-  address           String?
-  excluded_banks    String         @default("[]") // JSON string - Banks found in credit report
-  
-  // Identity Documents
-  id_document_path  String?        // Driver's license / Passport / State ID path
-  ssn_document_path String?        // SSN card path
-  documents_verified Boolean       @default(false)
-  
-  // Agreement
-  signature         String?
+  id                    String         @id @default(uuid())
+  email                 String         @unique
+  password_hash         String         @default("")
+  name                  String?
+  phone                 String?
+  date_of_birth         DateTime?
+  address               String?
+  excluded_banks        String         @default("[]") @db.Text
+  id_document_path      String?
+  ssn_document_path     String?
+  documents_verified    Boolean        @default(false)
+  signature             String?        @db.Text
   signed_agreement_date DateTime?
-  
-  // Password Reset
-  reset_token         String?
-  reset_token_expires DateTime?
-
-  orders            Order[]
-  credit_reports    CreditReport[]
-  
-  created_at        DateTime       @default(now())
-  updated_at        DateTime       @updatedAt
+  reset_token           String?
+  reset_token_expires   DateTime?
+  created_at            DateTime       @default(now())
+  updated_at            DateTime       @updatedAt
+  credit_reports        CreditReport[]
+  orders                Order[]
 }
 
 model CreditReport {
-  id                String   @id @default(uuid())
-  client_id         String
-  client            Client   @relation(fields: [client_id], references: [id])
-  
-  filename          String
-  file_path         String   // Local path or S3 key
-  status            String   // PENDING, PARSED, FAILED
-  
-  parsed_data       String?  // JSON string - Full AI extraction result
-  creditors_found   String   @default("[]") // JSON string - Extracted list
-  
-  created_at        DateTime @default(now())
+  id              String   @id @default(uuid())
+  client_id       String
+  filename        String
+  file_path       String
+  status          String
+  parsed_data     String?  @db.LongText
+  creditors_found String   @default("[]") @db.Text
+  created_at      DateTime @default(now())
+  client          Client   @relation(fields: [client_id], references: [id])
 }
 
 model Order {
-  id                      String    @id @default(uuid())
-  order_number            String    @unique // Human readable order number
-
-  // Client relationship
-  client_id               String?
-  client                  Client?   @relation(fields: [client_id], references: [id])
-
-  // Broker relationship
-  broker_id               String?
-  broker                  Broker?   @relation(fields: [broker_id], references: [id])
-
-  // Customer Information (Snapshot at time of order)
-  customer_email          String
-  customer_name           String
-  customer_phone          String?
-
-  // Payment Information
-  stripe_session_id       String?
-  stripe_payment_intent   String?
-  payment_status          String @default("PENDING") // PENDING, PROCESSING, PAID, SUCCEEDED, FAILED, REFUNDED
-  payment_method          String @default("MANUAL") // ACH, WIRE, ZELLE, CHECK, PAYPAL, CASH, MANUAL, STRIPE, OTHER
-
-  // Pricing Breakdown (all amounts in USD cents)
-  subtotal_base           Int      // Sum of TradelineSupply prices
-  broker_revenue_share    Int      // Total broker's share of our commission
-  broker_markup           Int      // Total broker's additional markup
-  platform_net_revenue    Int      // What platform keeps after sharing
-  total_charged           Int      // What customer paid
-
-  // TradelineSupply Order
-  tradeline_order_id      String?  // Order ID from TradelineSupply
-  tradeline_order_status  String?  // Status from TradelineSupply
-
-  // Order Status
-  status                  String @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, REFUNDED, CANCELLED
-
-  // Timestamps
-  created_at              DateTime  @default(now())
-  updated_at              DateTime  @updatedAt
-  completed_at            DateTime?
-
-  // Relations
-  items                   OrderItem[]
-  commission_records      CommissionRecord[]
-  webhook_logs            WebhookLog[]
+  id                     String             @id @default(uuid())
+  order_number           String             @unique
+  client_id              String?
+  broker_id              String?
+  customer_email         String
+  customer_name          String
+  customer_phone         String?
+  stripe_session_id      String?
+  stripe_payment_intent  String?
+  payment_status         String             @default("PENDING")
+  payment_method         String             @default("MANUAL")
+  subtotal_base          Int
+  broker_revenue_share   Int
+  broker_markup          Int
+  platform_net_revenue   Int
+  multi_line_discount    Int                @default(0)
+  promo_code             String?
+  total_charged          Int
+  tradeline_order_id     String?
+  tradeline_order_status String?
+  status                 String             @default("PENDING")
+  created_at             DateTime           @default(now())
+  updated_at             DateTime           @updatedAt
+  completed_at           DateTime?
+  commission_records     CommissionRecord[]
+  broker                 Broker?            @relation(fields: [broker_id], references: [id])
+  client                 Client?            @relation(fields: [client_id], references: [id])
+  items                  OrderItem[]
+  webhook_logs           WebhookLog[]
 
   @@index([broker_id])
   @@index([client_id])
@@ -154,202 +112,152 @@ model Order {
 }
 
 model OrderItem {
-  id                    String    @id @default(uuid())
-  order_id              String
-  order                 Order     @relation(fields: [order_id], references: [id], onDelete: Cascade)
-
-  // Tradeline Information
-  card_id               String
-  bank_name             String
-  credit_limit          Int
-  date_opened           String
-
-  // Pricing (in cents)
-  quantity              Int       @default(1)
-  base_price            Int       // TradelineSupply price per unit
-  revenue_share         Int       // Broker's share per unit
-  markup                Int       // Broker's markup per unit
-  customer_price        Int       // Final price per unit customer sees
-
-  // Totals (quantity * unit prices)
-  total_base            Int
-  total_revenue_share   Int
-  total_markup          Int
-  total_customer_price  Int
-
-  created_at            DateTime  @default(now())
+  id                   String   @id @default(uuid())
+  order_id             String
+  card_id              String
+  bank_name            String
+  credit_limit         Int
+  date_opened          String
+  quantity             Int      @default(1)
+  base_price           Int
+  revenue_share        Int
+  markup               Int
+  customer_price       Int
+  total_base           Int
+  total_revenue_share  Int
+  total_markup         Int
+  total_customer_price Int
+  created_at           DateTime @default(now())
+  order                Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
 
   @@index([order_id])
 }
 
-// Track commission records for broker payouts
 model CommissionRecord {
-  id                    String    @id @default(uuid())
-  broker_id             String
-  broker                Broker    @relation(fields: [broker_id], references: [id])
-  order_id              String
-  order                 Order     @relation(fields: [order_id], references: [id])
-
-  // Commission Breakdown (in cents)
-  revenue_share_amount  Int       // From platform's 50% commission
-  markup_amount         Int       // Broker's additional markup
-  total_commission      Int       // Total broker earns
-
-  // Payout Status
-  payout_status         String @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
-  payout_id             String?
-  payout                Payout?   @relation(fields: [payout_id], references: [id])
-
-  created_at            DateTime  @default(now())
-  paid_at               DateTime?
+  id                   String    @id @default(uuid())
+  broker_id            String
+  order_id             String
+  revenue_share_amount Int
+  markup_amount        Int
+  total_commission     Int
+  payout_status        String    @default("PENDING")
+  payout_id            String?
+  created_at           DateTime  @default(now())
+  paid_at              DateTime?
+  payout               Payout?   @relation(fields: [payout_id], references: [id])
+  order                Order     @relation(fields: [order_id], references: [id])
+  broker               Broker    @relation(fields: [broker_id], references: [id])
 
   @@index([broker_id])
   @@index([payout_status])
   @@index([created_at])
 }
 
-// Monthly broker payouts
 model Payout {
-  id                    String    @id @default(uuid())
-  broker_id             String
-  broker                Broker    @relation(fields: [broker_id], references: [id])
-
-  // Payout Period
-  period_start          DateTime
-  period_end            DateTime
-
-  // Amounts (in cents)
-  total_revenue_share   Int       // Total from platform commission sharing
-  total_markup          Int       // Total from broker's markups
-  total_amount          Int       // Total payout amount
-
-  // Payment Details
-  payment_method        String @default("ACH") // ACH, WIRE, ZELLE, CHECK, PAYPAL, CASH, MANUAL, STRIPE, OTHER
-  payment_details       String?   // JSON string - Bank details, etc.
-  transaction_id        String?   // External payment reference
-
-  // Status
-  status                String @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED
-  processed_at          DateTime?
-  notes                 String?
-
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
-
-  // Relations
-  commission_records    CommissionRecord[]
+  id                  String             @id @default(uuid())
+  broker_id           String
+  period_start        DateTime
+  period_end          DateTime
+  total_revenue_share Int
+  total_markup        Int
+  total_amount        Int
+  payment_method      String             @default("ACH")
+  payment_details     String?            @db.Text
+  transaction_id      String?
+  status              String             @default("PENDING")
+  processed_at        DateTime?
+  notes               String?            @db.Text
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+  commission_records  CommissionRecord[]
+  broker              Broker             @relation(fields: [broker_id], references: [id])
 
   @@index([broker_id])
   @@index([status])
   @@index([period_start, period_end])
 }
 
-// Analytics tracking for broker dashboards
 model Analytics {
-  id                    String    @id @default(uuid())
-  broker_id             String
-  broker                Broker    @relation(fields: [broker_id], references: [id])
-  date                  DateTime
-
-  // Widget Metrics
-  widget_loads          Int       @default(0)
-  unique_visitors       Int       @default(0)
-
-  // Shopping Metrics
-  cart_additions        Int       @default(0)
-  checkout_starts       Int       @default(0)
-  cart_abandonment      Int       @default(0)
-
-  // Sales Metrics
-  orders_count          Int       @default(0)
-  total_sales           Int       @default(0) // In cents
-  revenue_share_earned  Int       @default(0) // In cents
-  markup_earned         Int       @default(0) // In cents
-
-  // Conversion Metrics
-  conversion_rate       Float?    // Calculated field
-  average_order_value   Float?    // Calculated field
-
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
+  id                   String   @id @default(uuid())
+  broker_id            String
+  date                 DateTime
+  widget_loads         Int      @default(0)
+  unique_visitors      Int      @default(0)
+  cart_additions       Int      @default(0)
+  checkout_starts      Int      @default(0)
+  cart_abandonment     Int      @default(0)
+  orders_count         Int      @default(0)
+  total_sales          Int      @default(0)
+  revenue_share_earned Int      @default(0)
+  markup_earned        Int      @default(0)
+  conversion_rate      Float?
+  average_order_value  Float?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+  broker               Broker   @relation(fields: [broker_id], references: [id])
 
   @@unique([broker_id, date])
   @@index([broker_id])
   @@index([date])
 }
 
-// Webhook logs for debugging
 model WebhookLog {
-  id                    String    @id @default(uuid())
-  order_id              String?
-  order                 Order?    @relation(fields: [order_id], references: [id])
-
-  source                String // STRIPE or TRADELINE_SUPPLY
-  event_type            String
-  payload               String    // JSON string - webhook payload
-  response              String?   // JSON string - webhook response
-  status                String // RECEIVED, PROCESSING, PROCESSED, FAILED
-  error_message         String?
-
-  created_at            DateTime  @default(now())
-  processed_at          DateTime?
+  id            String    @id @default(uuid())
+  order_id      String?
+  source        String
+  event_type    String
+  payload       String    @db.Text
+  response      String?   @db.Text
+  status        String
+  error_message String?   @db.Text
+  created_at    DateTime  @default(now())
+  processed_at  DateTime?
+  order         Order?    @relation(fields: [order_id], references: [id])
 
   @@index([order_id])
   @@index([source])
   @@index([created_at])
 }
 
-// Activity logs for audit trail
 model ActivityLog {
-  id                    String    @id @default(uuid())
-  broker_id             String?
-  broker                Broker?   @relation(fields: [broker_id], references: [id])
-  admin_id              String?
-
-  action                String    // e.g., "ORDER_CREATED", "SETTINGS_UPDATED"
-  entity_type           String?   // e.g., "Order", "Broker"
-  entity_id             String?
-
-  metadata              String?   // JSON string - Additional context
-  ip_address            String?
-  user_agent            String?
-
-  created_at            DateTime  @default(now())
+  id          String   @id @default(uuid())
+  broker_id   String?
+  admin_id    String?
+  action      String
+  entity_type String?
+  entity_id   String?
+  metadata    String?  @db.Text
+  ip_address  String?
+  user_agent  String?
+  created_at  DateTime @default(now())
+  broker      Broker?  @relation(fields: [broker_id], references: [id])
 
   @@index([broker_id])
   @@index([action])
   @@index([created_at])
 }
 
-// Cache for expensive operations
 model PricingCache {
-  id                    String    @id @default(uuid())
-  cache_key             String    @unique
-  data                  String    // JSON string - cached data
-  expires_at            DateTime
-  created_at            DateTime  @default(now())
+  id         String   @id @default(uuid())
+  cache_key  String   @unique
+  data       String   @db.LongText
+  expires_at DateTime
+  created_at DateTime @default(now())
 
   @@index([cache_key])
   @@index([expires_at])
 }
 
-// Admin users for platform management
 model Admin {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
-  password_hash         String
-  name                  String
-  role                  String @default("STAFF") // SUPER_ADMIN, ADMIN, STAFF, SUPPORT
-
-  is_active             Boolean   @default(true)
-  last_login            DateTime?
-
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String
+  name          String
+  role          String    @default("STAFF")
+  is_active     Boolean   @default(true)
+  last_login    DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
 
   @@index([email])
 }
-
-// Note: Enums converted to String types for SQLite compatibility
-// Valid values are documented in comments on each field
-// When deploying to MySQL/PostgreSQL, these can be converted back to enums

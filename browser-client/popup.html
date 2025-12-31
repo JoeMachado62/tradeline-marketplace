@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tradeline Automation</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      width: 360px;
+      min-height: 400px;
+      padding: 16px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #eee;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #f8d038;
+      margin-bottom: 4px;
+    }
+    
+    .header .subtitle {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    .status-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .status-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .status-label {
+      font-size: 13px;
+      color: #aaa;
+    }
+    
+    .status-value {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .status-value.connected {
+      color: #4CAF50;
+    }
+    
+    .status-value.disconnected {
+      color: #FF9800;
+    }
+    
+    .status-value.error {
+      color: #F44336;
+    }
+    
+    .input-group {
+      margin-bottom: 16px;
+    }
+    
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    
+    .input-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .input-group input:focus {
+      outline: none;
+      border-color: #f8d038;
+    }
+    
+    .input-group input::placeholder {
+      color: #666;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #f8d038 0%, #e6b800 100%);
+      color: #1a1a2e;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(248,208,56,0.3);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: #eee;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.15);
+    }
+    
+    .btn-danger {
+      background: rgba(244,67,54,0.2);
+      color: #F44336;
+    }
+    
+    .btn-danger:hover {
+      background: rgba(244,67,54,0.3);
+    }
+    
+    .message {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 16px;
+      text-align: center;
+    }
+    
+    .message.info {
+      background: rgba(33,150,243,0.2);
+      color: #42A5F5;
+    }
+    
+    .message.success {
+      background: rgba(76,175,80,0.2);
+      color: #66BB6A;
+    }
+    
+    .message.error {
+      background: rgba(244,67,54,0.2);
+      color: #EF5350;
+    }
+    
+    .instructions {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.5;
+      margin-top: 16px;
+    }
+    
+    .instructions ol {
+      margin-left: 16px;
+    }
+    
+    .instructions li {
+      margin-bottom: 4px;
+    }
+    
+    #automation-status {
+      display: none;
+    }
+    
+    #automation-status.active {
+      display: block;
+    }
+    
+    .progress-indicator {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(248,208,56,0.2);
+      border-top-color: #f8d038;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🤖 Tradeline Automation</h1>
+    <div class="subtitle">Browser Control Client</div>
+  </div>
+  
+  <div class="status-card">
+    <div class="status-row">
+      <span class="status-label">Connection</span>
+      <span id="connection-status" class="status-value disconnected">Disconnected</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Session ID</span>
+      <span id="session-id" class="status-value">—</span>
+    </div>
+  </div>
+  
+  <div id="connect-form">
+    <div class="input-group">
+      <label for="server-url">Server URL</label>
+      <input type="text" id="server-url" placeholder="wss://tradelinerental.com" value="">
+    </div>
+    
+    <div class="input-group">
+      <label for="session-input">Session ID</label>
+      <input type="text" id="session-input" placeholder="lux_xxxxxxxx">
+    </div>
+    
+    <button id="connect-btn" class="btn btn-primary">Connect to Session</button>
+    
+    <div class="instructions">
+      <strong>How to use:</strong>
+      <ol>
+        <li>Log into TradelineSupply.com manually</li>
+        <li>Navigate to the pricing/order page</li>
+        <li>Get a Session ID from the Admin Dashboard</li>
+        <li>Enter it above and click Connect</li>
+        <li>Click "Start Automation" when ready</li>
+      </ol>
+    </div>
+  </div>
+  
+  <div id="automation-status">
+    <div class="progress-indicator">
+      <div class="spinner"></div>
+      <div id="status-message">Waiting for Lux commands...</div>
+    </div>
+    
+    <button id="disconnect-btn" class="btn btn-danger">Stop & Disconnect</button>
+  </div>
+  
+  <div id="message-container"></div>
+  
+  <script src="lib/socket.io.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

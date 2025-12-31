@@ -4,6 +4,7 @@ import { authenticateBroker } from "../middleware/auth";
 import { validate } from "../middleware/validation";
 import { getPricingEngine } from "../services/PricingEngine";
 import { prisma } from "../services/Database";
+import { getEmailService } from "../services/EmailService";
 
 const router = Router();
 const pricingEngine = getPricingEngine();
@@ -94,12 +95,13 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const broker = req.broker;
-      const { items } = req.body;
+      const { items, promo_code } = req.body;
 
       // Calculate totals
       const calculation = await pricingEngine.calculateOrderTotal(
         items,
-        broker.id
+        broker.id,
+        promo_code
       );
 
       res.json({
@@ -112,7 +114,8 @@ router.post(
             unit_price: item.customer_price,
             total: item.customer_price * item.quantity,
           })),
-          subtotal: calculation.total_customer_price,
+          subtotal: calculation.total_customer_price + (calculation.multi_line_discount || 0),
+          multi_line_discount: calculation.multi_line_discount || 0,
           total: calculation.total_customer_price,
           item_count: items.reduce(
             (sum: number, item: any) => sum + item.quantity,
@@ -198,7 +201,7 @@ router.post(
         data: {
           broker_id: broker.id,
           action: `WIDGET_${event.toUpperCase()}`,
-          metadata: data,
+          metadata: data ? JSON.stringify(data) : null,
         },
       });
 
@@ -209,6 +212,7 @@ router.post(
         error: "Failed to track event",
         code: "TRACKING_ERROR",
         message: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }
@@ -286,11 +290,17 @@ router.post(
         storage,
         limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
         fileFilter: (_req: any, file: any, cb: any) => {
-          const allowed = /jpeg|jpg|png|gif|pdf/;
-          const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-          const mime = allowed.test(file.mimetype);
-          if (ext && mime) cb(null, true);
-          else cb(new Error("Only images and PDFs allowed"));
+          const allowed = /jpeg|jpg|png|gif|pdf|webp|heic|heif/;
+          const ext = path.extname(file.originalname).toLowerCase();
+          // Check if extension matches (ignoring the dot) or contains the string
+          const extValid = allowed.test(ext); 
+          const mimeValid = allowed.test(file.mimetype);
+          
+          if (extValid && mimeValid) {
+             cb(null, true);
+          } else {
+             cb(new Error(`File type ${file.mimetype} or extension ${ext} not allowed. Only Images (JPG, PNG, HEIC) and PDFs are accepted.`));
+          }
         }
       }).fields([
         { name: "id_document", maxCount: 1 },
@@ -305,7 +315,10 @@ router.post(
         
         try {
           // Parse form data
-          const { email, name, phone, password, signature, date_of_birth, address } = req.body;
+          let { email, name, phone, password, signature, date_of_birth, address } = req.body;
+          // Normalize email
+          if (email) email = email.toLowerCase().trim();
+
           let items = req.body.items;
           
           // Items come as JSON string from FormData
@@ -380,13 +393,16 @@ router.post(
           const { getOrderService } = require("../services/OrderService");
           const orderService = getOrderService();
 
+          const { promo_code } = req.body;
+          
           const order = await orderService.createOrder({
             broker_id: broker.id,
             client_id: client.id,
             customer_email: email,
             customer_name: name,
             customer_phone: phone,
-            items: items
+            items: items,
+            promoCode: promo_code
           });
 
           // 3. Track Analytics
@@ -410,11 +426,26 @@ router.post(
             },
           });
 
-          // 4. TODO: Send confirmation email with payment instructions
-          // EmailService.sendOrderConfirmation(client.email, order);
+          // 4. Send confirmation emails (async, don't block response)
+          const emailService = getEmailService();
+          
+          // Send customer order confirmation
+          emailService.sendOrderConfirmation(order).catch((err: Error) => {
+            console.error("Failed to send order confirmation email:", err.message);
+          });
+          
+          // Send admin notification
+          emailService.sendNewOrderAdminNotification(order).catch((err: Error) => {
+            console.error("Failed to send admin notification email:", err.message);
+          });
 
-          // Use the Railway production URL
-          const baseUrl = process.env.PUBLIC_URL || "https://tradeline-marketplace-production-bcaa.up.railway.app";
+          // Determine Base URL dynamically
+          let baseUrl = process.env.PUBLIC_URL;
+          if (!baseUrl) {
+             const protocol = req.protocol;
+             const host = req.get('host');
+             baseUrl = `${protocol}://${host}`;
+          }
           
           res.json({
             success: true,

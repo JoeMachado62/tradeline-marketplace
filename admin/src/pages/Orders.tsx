@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AxiosError } from 'axios';
 import api from '../services/api';
-import { DollarSign, Eye, CheckCircle, XCircle, Clock, AlertCircle, Trash2 } from 'lucide-react';
+import { DollarSign, Eye, CheckCircle, XCircle, Clock, AlertCircle, Trash2, FileText, PenTool, ExternalLink } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface OrderItem {
@@ -22,6 +22,12 @@ interface Order {
   payment_status: string;
   created_at: string;
   items: OrderItem[];
+  client?: {
+    id_document_path?: string;
+    ssn_document_path?: string;
+    signature?: string;
+    signed_agreement_date?: string;
+  };
 }
 
 const Orders: React.FC = () => {
@@ -95,7 +101,25 @@ const Orders: React.FC = () => {
       setProcessingPayment(false);
     }
   };
-
+  
+  const viewDocument = async (type: string, filename: string) => {
+    try {
+      // Fetch signed URL or file via authenticated API
+      const response = await api.get(`/admin/documents/${type}/${encodeURIComponent(filename)}`);
+      
+      if (response.data.url) {
+        // S3 Signed URL
+        window.open(response.data.url, '_blank');
+      } else {
+        // Fallback or unexpected (e.g. local file served directly? Axios might have parsed it if text/pdf)
+        // For now, assume S3. If we needed blob support, we'd need responseType: 'blob' and dual handling.
+         alert("Document retrieved but format requires adjustment.");
+      }
+    } catch (err) {
+      console.error("Failed to load document", err);
+      alert("Failed to load document authorized URL.");
+    }
+  };
 
   const getStatusBadge = (status: string, paymentStatus: string) => {
     const statusConfig: Record<string, { bg: string; text: string; icon: LucideIcon }> = {
@@ -315,6 +339,79 @@ const Orders: React.FC = () => {
                     <span className="font-semibold text-[#032530]">${(item.customer_price / 100).toFixed(2)} × {item.quantity}</span>
                   </div>
                 )) || <p className="text-slate-500">No items</p>}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                 {/* Documents Section */}
+                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h3 className="font-semibold text-[#032530] mb-3 flex items-center gap-2">
+                      <FileText className="w-4 h-4" /> Documents
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedOrder.client?.id_document_path ? (
+                        <button 
+                          onClick={() => viewDocument('id_document', selectedOrder.client!.id_document_path!)}
+                          className="w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition text-sm text-left"
+                        >
+                          <span className="font-medium text-slate-700">ID Document</span>
+                          <ExternalLink className="w-3 h-3 text-slate-400" />
+                        </button>
+                      ) : (
+                        <div className="text-sm text-slate-400 italic px-2">No ID uploaded</div>
+                      )}
+                      
+                      {selectedOrder.client?.ssn_document_path ? (
+                        <button 
+                          onClick={() => viewDocument('ssn_document', selectedOrder.client!.ssn_document_path!)}
+                          className="w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition text-sm text-left"
+                        >
+                          <span className="font-medium text-slate-700">SSN Document</span>
+                          <ExternalLink className="w-3 h-3 text-slate-400" />
+                        </button>
+                      ) : (
+                        <div className="text-sm text-slate-400 italic px-2">No SSN uploaded</div>
+                      )}
+                    </div>
+                 </div>
+
+                 {/* Signature Section */}
+                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h3 className="font-semibold text-[#032530] mb-3 flex items-center gap-2">
+                       <PenTool className="w-4 h-4" /> Signed Agreement
+                    </h3>
+                    {selectedOrder.client?.signature ? (
+                      <div className="bg-white p-4 rounded-lg border border-slate-200">
+                        {/* Check if it's a data URL (old base64 image) or typed name (new) */}
+                        {selectedOrder.client.signature.startsWith('data:') ? (
+                          <img 
+                            src={selectedOrder.client.signature} 
+                            alt="Client Signature" 
+                            className="w-full h-auto max-h-[100px] object-contain" 
+                          />
+                        ) : (
+                          <div className="text-center">
+                            <div 
+                              style={{ 
+                                fontFamily: "'Brush Script MT', 'Segoe Script', cursive",
+                                fontSize: '28px',
+                                color: '#1e3a5f'
+                              }}
+                            >
+                              {selectedOrder.client.signature}
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1">
+                              (Electronically signed by typing full legal name)
+                            </div>
+                          </div>
+                        )}
+                        <div className="text-xs text-center text-slate-400 mt-2 pt-2 border-t border-slate-100">
+                          Signed: {new Date(selectedOrder.client.signed_agreement_date || selectedOrder.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ) : (
+                       <div className="text-sm text-slate-400 italic">No signature on file</div>
+                    )}
+                 </div>
               </div>
 
               {selectedOrder.status === 'PENDING' && selectedOrder.payment_status !== 'PAID' && (

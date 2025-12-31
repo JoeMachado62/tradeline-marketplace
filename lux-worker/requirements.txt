@@ -1,0 +1,23 @@
+# Lux Worker - Python Dependencies
+
+# Core OAGI SDK with all features
+oagi
+
+# Web server
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Socket.IO
+python-socketio[asyncio_client]>=5.10.0
+
+# Image processing
+Pillow>=10.0.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# Async HTTP (if needed for callbacks to Node)
+httpx>=0.25.0
+
+# Redis for session storage (Phase 2)
+# redis>=5.0.0

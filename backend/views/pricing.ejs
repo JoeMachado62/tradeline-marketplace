@@ -3,6 +3,20 @@
 <%- contentFor('body_attribute') %>
 
 <%- contentFor('extra_css') %>
+<link rel="stylesheet" href="/widget/tradeline-widget.css?v=<%= Date.now() %>">
+<style>
+  #tradeline-widget {
+    min-height: 600px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+    padding: 20px;
+    margin-top: 30px;
+  }
+  .inner-pages-section-area {
+    padding: 100px 0;
+  }
+</style>
 
 <%- contentFor('content') %>
   <%- include('partials/header/navbar3') %>
@@ -149,5 +163,5 @@
 
   <!-- Tradeline Widget Scripts (external to comply with CSP) -->
   <script src="/js/widget-config.js"></script>
-  <script src="/widget/tradeline-widget.iife.js"></script>
+  <script src="/widget/tradeline-widget.iife.js?v=<%= Date.now() %>"></script>
 

@@ -53,8 +53,14 @@ export const authenticateBroker = async (
     // Attach broker to request
     req.broker = broker;
     return next();
-  } catch (error) {
+  } catch (error: any) {
     console.error("Broker authentication error:", error);
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        fs.appendFileSync(path.join(process.cwd(), 'error.log'), `[${new Date().toISOString()}] Auth Error: ${error.message}\n${error.stack}\n\n`);
+    } catch (e) { /* ignore log error */ }
+    
     return res.status(500).json({
       error: "Authentication failed",
       code: "AUTH_ERROR",

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+dotenv.config({ path: '.env.local', override: true });
 
 export const config = {
   env: process.env.NODE_ENV || "development",
@@ -60,6 +61,16 @@ export const config = {
     corsOrigin: process.env.CORS_ORIGIN || "*",
     rateLimitWindow: 15 * 60 * 1000, // 15 minutes
     rateLimitMax: 100, // requests per window
+  },
+
+  // Email
+  email: {
+    host: process.env.EMAIL_HOST || "smtp.sendgrid.net",
+    port: parseInt(process.env.EMAIL_PORT || "587", 10),
+    user: process.env.EMAIL_USERNAME || "apikey",
+    password: process.env.EMAIL_PASSWORD || "",
+    from: process.env.EMAIL_FROM || "notifications@ezwai.com",
+    adminEmail: process.env.ADMIN_EMAIL || "joe@ezwai.com",
   },
 };
 

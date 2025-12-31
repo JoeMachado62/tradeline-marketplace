@@ -1,0 +1,261 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Broker {
+  id                    String             @id @default(uuid())
+  name                  String
+  business_name         String?
+  email                 String             @unique
+  phone                 String?
+  business_address      String?
+  api_key               String             @unique
+  api_secret            String
+  password_hash         String?
+  revenue_share_percent Float              @default(10)
+  markup_type           String             @default("PERCENTAGE")
+  markup_value          Float              @default(0)
+  status                String             @default("PENDING")
+  approved_by           String?
+  approved_at           DateTime?
+  notes                 String?
+  created_at            DateTime           @default(now())
+  updated_at            DateTime           @updatedAt
+  activity_logs         ActivityLog[]
+  analytics             Analytics[]
+  commission_records    CommissionRecord[]
+  orders                Order[]
+  payouts               Payout[]
+
+  @@index([email])
+  @@index([api_key])
+  @@index([status])
+}
+
+model Client {
+  id                    String         @id @default(uuid())
+  email                 String         @unique
+  password_hash         String         @default("")
+  name                  String?
+  phone                 String?
+  date_of_birth         DateTime?
+  address               String?
+  excluded_banks        String         @default("[]")
+  id_document_path      String?
+  ssn_document_path     String?
+  documents_verified    Boolean        @default(false)
+  signature             String?
+  signed_agreement_date DateTime?
+  reset_token           String?
+  reset_token_expires   DateTime?
+  created_at            DateTime       @default(now())
+  updated_at            DateTime       @updatedAt
+  credit_reports        CreditReport[]
+  orders                Order[]
+}
+
+model CreditReport {
+  id              String   @id @default(uuid())
+  client_id       String
+  filename        String
+  file_path       String
+  status          String
+  parsed_data     String?
+  creditors_found String   @default("[]")
+  created_at      DateTime @default(now())
+  client          Client   @relation(fields: [client_id], references: [id])
+}
+
+model Order {
+  id                     String             @id @default(uuid())
+  order_number           String             @unique
+  client_id              String?
+  broker_id              String?
+  customer_email         String
+  customer_name          String
+  customer_phone         String?
+  stripe_session_id      String?
+  stripe_payment_intent  String?
+  payment_status         String             @default("PENDING")
+  payment_method         String             @default("MANUAL")
+  subtotal_base          Int
+  broker_revenue_share   Int
+  broker_markup          Int
+  platform_net_revenue   Int
+  total_charged          Int
+  tradeline_order_id     String?
+  tradeline_order_status String?
+  status                 String             @default("PENDING")
+  created_at             DateTime           @default(now())
+  updated_at             DateTime           @updatedAt
+  completed_at           DateTime?
+  commission_records     CommissionRecord[]
+  broker                 Broker?            @relation(fields: [broker_id], references: [id])
+  client                 Client?            @relation(fields: [client_id], references: [id])
+  items                  OrderItem[]
+  webhook_logs           WebhookLog[]
+
+  @@index([broker_id])
+  @@index([client_id])
+  @@index([customer_email])
+  @@index([status])
+  @@index([created_at])
+  @@index([order_number])
+}
+
+model OrderItem {
+  id                   String   @id @default(uuid())
+  order_id             String
+  card_id              String
+  bank_name            String
+  credit_limit         Int
+  date_opened          String
+  quantity             Int      @default(1)
+  base_price           Int
+  revenue_share        Int
+  markup               Int
+  customer_price       Int
+  total_base           Int
+  total_revenue_share  Int
+  total_markup         Int
+  total_customer_price Int
+  created_at           DateTime @default(now())
+  order                Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+}
+
+model CommissionRecord {
+  id                   String    @id @default(uuid())
+  broker_id            String
+  order_id             String
+  revenue_share_amount Int
+  markup_amount        Int
+  total_commission     Int
+  payout_status        String    @default("PENDING")
+  payout_id            String?
+  created_at           DateTime  @default(now())
+  paid_at              DateTime?
+  payout               Payout?   @relation(fields: [payout_id], references: [id])
+  order                Order     @relation(fields: [order_id], references: [id])
+  broker               Broker    @relation(fields: [broker_id], references: [id])
+
+  @@index([broker_id])
+  @@index([payout_status])
+  @@index([created_at])
+}
+
+model Payout {
+  id                  String             @id @default(uuid())
+  broker_id           String
+  period_start        DateTime
+  period_end          DateTime
+  total_revenue_share Int
+  total_markup        Int
+  total_amount        Int
+  payment_method      String             @default("ACH")
+  payment_details     String?
+  transaction_id      String?
+  status              String             @default("PENDING")
+  processed_at        DateTime?
+  notes               String?
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+  commission_records  CommissionRecord[]
+  broker              Broker             @relation(fields: [broker_id], references: [id])
+
+  @@index([broker_id])
+  @@index([status])
+  @@index([period_start, period_end])
+}
+
+model Analytics {
+  id                   String   @id @default(uuid())
+  broker_id            String
+  date                 DateTime
+  widget_loads         Int      @default(0)
+  unique_visitors      Int      @default(0)
+  cart_additions       Int      @default(0)
+  checkout_starts      Int      @default(0)
+  cart_abandonment     Int      @default(0)
+  orders_count         Int      @default(0)
+  total_sales          Int      @default(0)
+  revenue_share_earned Int      @default(0)
+  markup_earned        Int      @default(0)
+  conversion_rate      Float?
+  average_order_value  Float?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+  broker               Broker   @relation(fields: [broker_id], references: [id])
+
+  @@unique([broker_id, date])
+  @@index([broker_id])
+  @@index([date])
+}
+
+model WebhookLog {
+  id            String    @id @default(uuid())
+  order_id      String?
+  source        String
+  event_type    String
+  payload       String
+  response      String?
+  status        String
+  error_message String?
+  created_at    DateTime  @default(now())
+  processed_at  DateTime?
+  order         Order?    @relation(fields: [order_id], references: [id])
+
+  @@index([order_id])
+  @@index([source])
+  @@index([created_at])
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  broker_id   String?
+  admin_id    String?
+  action      String
+  entity_type String?
+  entity_id   String?
+  metadata    String?
+  ip_address  String?
+  user_agent  String?
+  created_at  DateTime @default(now())
+  broker      Broker?  @relation(fields: [broker_id], references: [id])
+
+  @@index([broker_id])
+  @@index([action])
+  @@index([created_at])
+}
+
+model PricingCache {
+  id         String   @id @default(uuid())
+  cache_key  String   @unique
+  data       String
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([cache_key])
+  @@index([expires_at])
+}
+
+model Admin {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String
+  name          String
+  role          String    @default("STAFF")
+  is_active     Boolean   @default(true)
+  last_login    DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  @@index([email])
+}

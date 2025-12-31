@@ -23,11 +23,21 @@ interface WidgetState {
   tradelines: Tradeline[];
   cart: CartItem[];
   loading: boolean;
+  loader: boolean;
   error: string | null;
   calculationResult: CalculationResult | null;
   isCalculating: boolean;
+  promoCode: string;
   onboardingStep: 'intro' | 'upload' | 'complete';
   uploadProgress: number;
+  checkoutForm: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    date_of_birth: string;
+    address: string;
+  };
 }
 
 export const useWidgetStore = defineStore("widget", {
@@ -38,11 +48,21 @@ export const useWidgetStore = defineStore("widget", {
     tradelines: [],
     cart: [],
     loading: false,
+    loader: false,
     error: null,
     calculationResult: null,
     isCalculating: false,
+    promoCode: "",
     onboardingStep: 'intro',
     uploadProgress: 0,
+    checkoutForm: {
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      date_of_birth: "",
+      address: "",
+    },
   }),
 
   getters: {
@@ -230,7 +250,10 @@ export const useWidgetStore = defineStore("widget", {
           quantity: item.quantity,
         }));
 
-        const response = await this.api().post("/public/calculate", { items });
+        const response = await this.api().post("/public/calculate", { 
+          items,
+          promo_code: this.promoCode 
+        });
         this.calculationResult = response.data.calculation;
       } catch (error) {
         console.error("Calculation failed:", error);
@@ -315,12 +338,25 @@ export const useWidgetStore = defineStore("widget", {
           quantity: item.quantity,
         }))));
         
+        // Determine API URL with safer fallback for local dev
+        // 1. Configured URL
+        // 2. Window config (global)
+        // 3. Current origin + /api (if we are same domain)
+        // 4. Default production
+        const globalConfig = (window as any).TL_WIDGET_CONFIG;
+        const apiUrl = this.config?.apiUrl || 
+                       globalConfig?.apiUrl || 
+                       (window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : null) ||
+                       'https://api.tradelinerental.com/api';
+
+        console.log('[TradelineWidget] Submitting order to:', apiUrl);
+
         const response = await axios.post(
-          `${this.config?.apiUrl || 'https://api.tradelinerental.com/api'}/public/checkout`,
+          `${apiUrl}/public/checkout`,
           formData,
           {
             headers: {
-              "X-API-Key": this.config?.apiKey,
+              "X-API-Key": this.config?.apiKey || globalConfig?.apiKey,
               "Content-Type": "multipart/form-data"
             }
           }
@@ -333,8 +369,16 @@ export const useWidgetStore = defineStore("widget", {
           window.location.href = response.data.confirmation_url || response.data.redirect_url;
         }
       } catch (error: any) {
-        this.error = error.response?.data?.error || "Checkout failed. Please try again.";
         console.error("Checkout with documents failed:", error);
+         if (error.response) {
+             // Stringify to make it copy-pasteable
+             console.error("Server Error Details (JSON):", JSON.stringify(error.response.data, null, 2));
+             
+             // Prioritize 'error' field, then 'message', then fallback
+             this.error = error.response.data?.error || error.response.data?.message || "Server rejected the request.";
+        } else {
+             this.error = error.message || "Failed to submit order.";
+        }
       } finally {
         this.loading = false;
       }

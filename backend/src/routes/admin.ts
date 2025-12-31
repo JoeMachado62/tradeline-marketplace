@@ -330,9 +330,9 @@ router.delete("/orders/:id", authenticateAdmin, async (req: Request, res: Respon
             success: true, 
             message: `Order ${order.order_number} deleted successfully` 
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Delete order error:", error);
-        res.status(500).json({ error: "Failed to delete order" });
+        res.status(500).json({ error: `Failed to delete order: ${error.message}` });
     }
 });
 
@@ -659,13 +659,13 @@ router.post("/orders/:id/mark-paid", authenticateAdmin, async (req: Request, res
             data: {
                 broker_id: order.broker_id || undefined,
                 action: "ORDER_MARKED_PAID",
-                metadata: {
+                metadata: JSON.stringify({
                     order_id: id,
                     order_number: order.order_number,
                     payment_method,
                     admin_id: adminId,
                     amount: order.total_charged
-                }
+                })
             }
         });
         

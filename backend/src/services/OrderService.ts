@@ -1,13 +1,19 @@
-import { Order, OrderStatus, Prisma, PaymentMethod } from "@prisma/client";
+import { Order, Prisma } from "@prisma/client";
 import { prisma } from "./Database";
 import { getPricingEngine, PricingEngine } from "./PricingEngine";
 import { getTradelineSupplyAPI } from "./TradelineSupplyAPI";
 import { getCacheService } from "./Cache";
+import { getEmailService } from "./EmailService";
+
+// Local types until Prisma regenerates
+export type OrderStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "CANCELLED" | "REFUNDED";
+export type PaymentMethod = "STRIPE" | "MANUAL" | "ZELLE" | "CASHAPP" | "VENMO";
 
 export class OrderService {
   private pricingEngine = getPricingEngine();
   private tradelineAPI = getTradelineSupplyAPI();
   private cache = getCacheService();
+  private emailService = getEmailService();
 
   /**
    * Generate human-readable order number
@@ -36,11 +42,13 @@ export class OrderService {
     }>;
     stripe_session_id?: string;
     client_id?: string;
+    promoCode?: string;
   }): Promise<Order> {
     // Calculate pricing with broker commission
     const calculation = await this.pricingEngine.calculateOrderTotal(
       data.items,
-      data.broker_id
+      data.broker_id,
+      data.promoCode
     );
 
     // Get broker for commission details
@@ -63,6 +71,8 @@ export class OrderService {
           customer_name: data.customer_name,
           customer_phone: data.customer_phone,
           stripe_session_id: data.stripe_session_id,
+          promo_code: data.promoCode,
+          multi_line_discount: PricingEngine.usdToCents(calculation.multi_line_discount || 0),
 
           // Pricing breakdown (in cents for precision)
           subtotal_base: PricingEngine.usdToCents(calculation.subtotal_base),
@@ -114,7 +124,7 @@ export class OrderService {
               ),
             })),
           },
-        },
+        } as any,
         include: {
           items: true,
         },
@@ -142,22 +152,22 @@ export class OrderService {
           action: "ORDER_CREATED",
           entity_type: "Order",
           entity_id: newOrder.id,
-          metadata: {
+          metadata: JSON.stringify({
             order_number: newOrder.order_number,
-            item_count: newOrder.items.length,
+            item_count: (newOrder as any).items.length,
             total: PricingEngine.centsToUsd(newOrder.total_charged),
-          },
+          }),
         },
       });
 
       return newOrder;
     });
 
-    console.log(
-      `Order created: ${order.order_number} for ${PricingEngine.centsToUsd(
-        order.total_charged
-      )}`
-    );
+
+    // Send notifications
+    this.emailService.sendOrderConfirmation(order).catch(e => console.error("Failed to send order confirmation:", e));
+    this.emailService.sendNewOrderAdminNotification(order).catch(e => console.error("Failed to send admin notification:", e));
+
     return order;
   }
 
@@ -227,6 +237,13 @@ export class OrderService {
       });
 
         console.log(`TradelineSupply order created: #${tradelineOrder.id}`);
+        
+        // Notify fulfillment
+        // Use timeout to avoid blocking transaction/response
+        setTimeout(() => {
+             this.emailService.sendOrderFulfilled(order).catch(e => console.error("Failed to send fulfillment email:", e));
+        }, 1000);
+
       } catch (error) {
         console.error("Failed to create TradelineSupply order:", error);
 
@@ -278,12 +295,12 @@ export class OrderService {
           action: "PAYMENT_COMPLETED",
           entity_type: "Order",
           entity_id: orderId,
-          metadata: {
+          metadata: JSON.stringify({
             order_number: order.order_number,
             payment_intent: paymentIntentId,
             payment_method: paymentMethod,
             total: PricingEngine.centsToUsd(order.total_charged),
-          },
+          }),
         },
       });
 
@@ -291,6 +308,9 @@ export class OrderService {
     }, {
       timeout: 15000 // Increase timeout for external API call
     });
+
+    // Send payment confirmation email outside transaction
+    this.emailService.sendPaymentConfirmation(order).catch(e => console.error("Failed to send payment confirmation:", e));
 
     // Clear any cached data
     await this.cache.delete(this.cache.keys.order(orderId));
@@ -316,13 +336,13 @@ export class OrderService {
         action: "PAYMENT_FAILED",
         entity_type: "Order",
         entity_id: orderId,
-        metadata: { reason },
+        metadata: JSON.stringify({ reason }),
       },
     });
   }
 
   /**
-   * Record a payment made manually (Cash, Wire, etc.)
+   * Record a payment made manually (Cash, Wire, etc.) and trigger LUX Bot
    */
   async recordManualPayment(orderId: string, paymentMethod: PaymentMethod, adminId: string): Promise<Order> {
     if ((paymentMethod as any) === "STRIPE") {
@@ -331,6 +351,10 @@ export class OrderService {
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
+      include: {
+        items: true,
+        client: true,
+      },
     });
 
     if (!order) throw new Error("Order not found");
@@ -346,16 +370,83 @@ export class OrderService {
         action: 'MANUAL_PAYMENT_RECORDED',
         entity_type: 'Order',
         entity_id: orderId,
-        metadata: {
+        metadata: JSON.stringify({
           paymentMethod,
           recordedBy: adminId,
           total: PricingEngine.centsToUsd(order.total_charged)
-        },
+        }),
       } as any
     });
 
+    // Trigger LUX Bot for automated fulfillment (async - don't block response)
+    if (order.items && order.items.length > 0) {
+      this.triggerLuxBot(order);
+    }
+
     return updatedOrder;
   }
+
+  /**
+   * Trigger the LUX Bot to fulfill an order on TradelineSupply.com
+   * Runs asynchronously to not block the API response
+   */
+  private triggerLuxBot(order: any): void {
+    try {
+      const path = require('path');
+      const { spawn } = require('child_process');
+      
+      const scriptPath = path.join(process.cwd(), 'scripts', 'lux_bot.py');
+      
+      // Collect all Card IDs from order items
+      const cardIds = order.items.map((item: any) => item.card_id).join(',');
+      
+      // Get client info
+      const clientName = order.client?.name || order.customer_name || 'Client';
+      const clientEmail = order.client?.email || order.customer_email;
+      const promoCode = (order as any).promo_code || 'PKGDEAL';
+      
+      console.log(`🤖 Triggering LUX Bot for Order ${order.order_number}`);
+      console.log(`   Card IDs: ${cardIds}`);
+      console.log(`   Client: ${clientName} (${clientEmail})`);
+      
+      const bot = spawn('python', [
+        scriptPath,
+        '--order-id', order.id,
+        '--card-ids', cardIds,
+        '--client-name', clientName,
+        '--client-email', clientEmail,
+        '--promo-code', promoCode
+      ], {
+        env: { ...process.env },
+        detached: true,
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+
+      bot.stdout.on('data', (data: Buffer) => {
+        console.log(`[LuxBot] ${data.toString().trim()}`);
+      });
+
+      bot.stderr.on('data', (data: Buffer) => {
+        console.error(`[LuxBot Error] ${data.toString().trim()}`);
+      });
+
+      bot.on('close', (code: number) => {
+        if (code === 0) {
+          console.log(`✅ LUX Bot completed successfully for Order ${order.order_number}`);
+        } else {
+          console.error(`❌ LUX Bot failed with code ${code} for Order ${order.order_number}`);
+        }
+      });
+
+      // Unref so the parent process can exit independently
+      bot.unref();
+      
+    } catch (error) {
+      console.error(`Failed to trigger LUX Bot:`, error);
+      // Don't throw - let the order proceed even if bot fails to start
+    }
+  }
+
 
   /**
    * Get order details with commission breakdown

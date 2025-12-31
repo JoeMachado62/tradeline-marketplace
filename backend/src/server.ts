@@ -33,7 +33,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "https://app.creditservicesus.com"],
+      connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "https://app.creditservicesus.com", "https://api.zippopotam.us"],
       frameSrc: ["'self'", "https://app.creditservicesus.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
@@ -87,6 +87,9 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payouts", payoutRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/portal", portalRoutes);
+
+import luxRoutes from "./routes/lux";
+app.use("/api/lux", luxRoutes);
 
 import brokerPortalRoutes from "./routes/broker-portal";
 app.use("/api/portal/broker", brokerPortalRoutes);
@@ -143,7 +146,7 @@ if (fs.existsSync(widgetPath)) {
         // Critical: Allow resource to be loaded cross-origin
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         // Cache for 1 hour
-        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.setHeader('Cache-Control', 'no-store');
         next();
     }, express.static(widgetPath));
     

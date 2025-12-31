@@ -247,8 +247,14 @@
         </div>
 
         <!-- Cart Overlay & Slide-out Panel -->
-        <div v-if="showCart" class="tl-cart-overlay" @click="showCart = false"></div>
-        <Cart v-if="showCart" @close="showCart = false" />
+        <Teleport to="body">
+          <div v-if="showCart" class="tl-cart-overlay" @click="showCart = false"></div>
+          <Cart 
+            v-if="showCart" 
+            @close="showCart = false" 
+            :style="rootStyles" 
+          />
+        </Teleport>
       </div>
     </div>
   </div>
@@ -263,6 +269,29 @@ import type { Tradeline } from "./types";
 
 const store = useWidgetStore();
 const showCart = ref(false);
+
+const rootStyles = computed(() => {
+  const theme = store.config?.theme as any;
+  const defaultColor = "#051b41";
+  const defaultFont = "Roboto, sans-serif";
+
+  if (!theme)
+    return {
+      "--tl-primary-color": defaultColor,
+      "--tl-font-family": defaultFont,
+    };
+
+  return {
+    "--tl-primary-color":
+      theme.primaryColor || theme.primary_color || defaultColor,
+    "--tl-font-family": theme.fontFamily || theme.font_family || defaultFont,
+  };
+});
+
+// Debug cart toggle
+watch(showCart, (val) => {
+  console.log('[TradelineWidget] showCart changed:', val);
+});
 const showFilters = ref(false);
 const searchQuery = ref("");
 const sortField = ref<keyof Tradeline | "date_opened">("price");
@@ -806,8 +835,8 @@ const cssVariables = computed(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  background: rgba(0, 0, 0, 0.7) !important;
+  z-index: 999998 !important;
   animation: fadeIn 0.2s ease-out;
 }
 

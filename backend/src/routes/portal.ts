@@ -7,6 +7,7 @@ import { prisma } from "../services/Database";
 import { validate } from "../middleware/validation";
 import { authenticateClient } from "../middleware/clientAuth";
 import { PricingEngine } from "../services/PricingEngine";
+import { getEmailService } from "../services/EmailService";
 
 const router = Router();
 
@@ -200,10 +201,9 @@ router.post(
       const baseUrl = process.env.PUBLIC_URL || "https://tradeline-marketplace-production-bcaa.up.railway.app";
       const resetUrl = `${baseUrl}/portal/reset-password?token=${resetToken}`;
 
-      // TODO: Send email with reset link
-      // For now, log it (in production, use email service)
-      console.log(`Password reset requested for ${email}`);
-      console.log(`Reset URL: ${resetUrl}`);
+      await getEmailService().sendPasswordReset(email, resetToken);
+      
+      console.log(`Password reset sent to ${email}`);
 
       res.json({ 
         success: true, 

@@ -63,7 +63,7 @@ router.get("/inventory", (_req: Request, res: Response) => {
         title: "Tradeline Inventory | TradelineRental.com",
         html_attribute: 'class="no-js"',
         body_attribute: "",
-        extra_css: '<link rel="stylesheet" href="/widget/tradeline-widget.css"><style>#tradeline-widget{min-height:600px;background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.05);padding:20px;margin-top:30px;}.inner-pages-section-area{padding:100px 0;}</style>',
+        extra_css: "",
         currentPath: "/inventory"
     });
 });

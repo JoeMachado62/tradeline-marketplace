@@ -43,6 +43,7 @@ export interface CalculationResult {
     total: number;
   }>;
   subtotal: number;
+  multi_line_discount?: number;
   total: number;
   item_count: number;
 }
