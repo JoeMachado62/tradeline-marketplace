@@ -1,153 +1,214 @@
 <%- contentFor('html_attribute') %>
 
-<%- contentFor('body_attribute') %>
+  <%- contentFor('body_attribute') %>
 
-<%- contentFor('extra_css') %>
-<link rel="stylesheet" href="/widget/tradeline-widget.css?v=<%= Date.now() %>">
-<style>
-  #tradeline-widget {
-    min-height: 600px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.05);
-    padding: 20px;
-    margin-top: 30px;
-  }
-  .inner-pages-section-area {
-    padding: 100px 0;
-  }
-</style>
+    <%- contentFor('extra_css') %>
+      <link rel="stylesheet" href="/widget/tradeline-widget.css?v=<%= Date.now() %>">
+      <style>
+        #tradeline-widget {
+          min-height: 600px;
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+          padding: 20px;
+          margin-top: 30px;
+        }
 
-<%- contentFor('content') %>
-  <%- include('partials/header/navbar3') %>
+        .inner-pages-section-area {
+          padding: 100px 0;
+        }
 
-  <!-- ===== HERO AREA STARTS ======= -->
-  <div class="inner-pages-section-area" style="background-image: url(/img/all-images/bg/hero-bg1.png); background-position: center; background-repeat: no-repeat; background-size: cover;">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-12 m-auto">
-          <div class="inner-header text-center">
-            <h2 class="text-anime-style-3">Inventory & Pricing</h2>
-            <div class="space24"></div>
-            <a href="/">Home <i class="fa-solid fa-angle-right"></i> <span>Browse Inventory</span></a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== HERO AREA ENDS ======= -->
+        /* Hide the default widget button */
+        .fw-widget-button,
+        button.fw-widget-button {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
 
-  <!-- ===== INVENTORY AREA STARTS ======= -->
-  <div class="inventory-section-area sp2">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-12">
-          <div class="heading3 text-center">
-            <h5>Our Current Inventory</h5>
-            <div class="space16"></div>
-            <h2 class="text-anime-style-3">Find the Perfect Tradeline for Your Credit Profile</h2>
-            <p class="mt-3">Browse our verified, high-limit tradelines below. Add items to your cart and proceed to checkout to begin your credit success journey.</p>
-          </div>
-          
-          <!-- The Tradeline Widget will be mounted here -->
-          <div id="tradeline-widget">
-            <div class="text-center p-5">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading Inventory...</span>
-              </div>
-              <p class="mt-3">Loading our latest tradeline inventory...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== INVENTORY AREA ENDS ======= -->
+        /* Ensure widget popup is on top of everything */
+        .fw-widget-container,
+        .fw-widget-overlay,
+        div[class*="fw-widget"] {
+          z-index: 2147483647 !important;
+        }
+      </style>
+      <style>
+        .homepage3-body .vl-transparent-header .row-bg {
+          background: rgba(0, 0, 0, 0.3) !important;
+          border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+      </style>
 
-  <!-- ===== PRICING AREA STARTS ======= -->
-  <div class="pricing-section-area sp2" style="background-image: url(/img/all-images/bg/bg4.png); background-position: center; background-repeat: no-repeat; background-size: cover;">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-8 m-auto">
-          <div class="heading3 text-center">
-            <h5>Pricing Plans</h5>
-            <div class="space16"></div>
-            <h2 class="text-anime-style-3">Funding Consulting Packages</h2>
-            <div class="space16"></div>
-            <p>Choose the consulting plan that fits your business needs.</p>
-          </div>
-        </div>
-      </div>
-      <div class="space30"></div>
-      <div class="row">
-        <div class="col-lg-12">
-          <div class="tab-content">
-            <div id="monthly">
+      <%- contentFor('content') %>
+        <%- include('partials/header/navbar3') %>
+
+          <!-- ===== HERO AREA STARTS ======= -->
+          <div class="inner-pages-section-area"
+            style="background-image: url(/img/all-images/bg/hero-bg1.png); background-position: center; background-repeat: no-repeat; background-size: cover;">
+            <div class="container">
               <div class="row">
-                <!-- Tier 1 -->
-                <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
-                  <div class="single-pricing-area">
-                    <div class="pricing-box">
-                      <h3>Starter Funding</h3>
-                      <div class="space26"></div>
-                      <p>Perfect for new businesses looking for initial capital injections.</p>
-                      <div class="space38"></div>
-                      <h2>$499 <span>/Per Month</span> <img src="/img/elements/elements19.png" alt="" class="elements19 keyframe5" /></h2>
-                      <div class="space32"></div>
-                      <ul>
-                        <li><img src="/img/icons/arrow1.svg" alt="" />Funding up to $20,000</li>
-                        <li><img src="/img/icons/arrow1.svg" alt="" />Credit Analysis</li>
-                        <li><img src="/img/icons/arrow1.svg" alt="" />Basic Consulting</li>
-                      </ul>
-                      <div class="space32"></div>
-                      <div class="btn-area1">
-                        <a href="#" class="vl-btn3 book-call-trigger">Get Started</a>
+                <div class="col-lg-12 m-auto">
+                  <div class="inner-header text-center">
+                    <h2 class="text-anime-style-3">Inventory & Pricing</h2>
+                    <div class="space24"></div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ===== HERO AREA ENDS ======= -->
+
+          <!-- ===== INVENTORY AREA STARTS ======= -->
+          <div class="inventory-section-area sp2">
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-12">
+                  <div class="heading3 text-center">
+                    <h5>Our Current Inventory</h5>
+                    <div class="space16"></div>
+                    <h2 class="text-anime-style-3">Find the Perfect Tradeline for Your Credit Profile</h2>
+                    <p class="mt-3">Browse our verified, high-limit tradelines below. Add items to your cart and proceed
+                      to checkout to begin your credit success journey.</p>
+                  </div>
+
+                  <!-- Savings Banner -->
+                  <div class="mb-4" style="margin-bottom: 24px;">
+                    <img src="/img/savings_banner.jpg" alt="Volume Purchase Discounts"
+                      style="width: 100%; height: auto; border-radius: 12px; display: block;">
+                  </div>
+
+                  <!-- The Tradeline Widget will be mounted here -->
+                  <div id="tradeline-widget">
+                    <div class="text-center p-5">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading Inventory...</span>
                       </div>
+                      <p class="mt-3">Loading our latest tradeline inventory...</p>
                     </div>
                   </div>
                 </div>
-                <!-- Tier 2 -->
-                <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
-                  <div class="single-pricing-area active">
-                    <div class="pricing-box">
-                      <h3>Growth Funding</h3>
-                      <div class="space26"></div>
-                      <p>Designed for established businesses ready to scale operations.</p>
-                      <div class="space38"></div>
-                      <h2>$799 <span>/Per Month</span> <img src="/img/elements/elements19.png" alt="" class="elements19 keyframe5" /></h2>
-                      <div class="space32"></div>
-                      <ul>
-                        <li><img src="/img/icons/arrow2.svg" alt="" />Funding up to $50,000</li>
-                        <li><img src="/img/icons/arrow2.svg" alt="" />Advanced Credit Building</li>
-                        <li><img src="/img/icons/arrow2.svg" alt="" />Business Structuring</li>
-                        <li><img src="/img/icons/arrow2.svg" alt="" />Priority Support</li>
-                      </ul>
-                      <div class="space32"></div>
-                      <div class="btn-area1">
-                        <a href="#" class="vl-btn3 book-call-trigger">Get Started</a>
-                      </div>
+              </div>
+            </div>
+          </div>
+          <!-- ===== INVENTORY AREA ENDS ======= -->
+
+          <!-- ===== PRICING AREA STARTS ======= -->
+          <div class="pricing-section-area sp2"
+            style="background-image: url(/img/all-images/bg/bg4.png); background-position: center; background-repeat: no-repeat; background-size: cover;">
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-8 m-auto">
+                  <div class="heading3 text-center">
+                    <h5>Pricing Plans</h5>
+                    <div class="space16"></div>
+                    <h2 class="text-anime-style-3">Funding Consulting Packages</h2>
+                    <div class="space16"></div>
+                    <div class="text-start text-md-center">
+                      <p style="font-size: 18px; color: #ffffff; line-height: 1.6; font-weight: 500;">When it comes to
+                        getting maximum funding at the best possible terms, getting your credit file looking just right
+                        is only half the battle. Knowing where and how to apply while avoiding mistakes that reduce your
+                        chances of getting approved is where the winning is done.</p>
+                      <br>
+                      <p style="font-size: 18px; color: #ffffff; line-height: 1.6; font-weight: 500;">Our expert funding
+                        specialists will liaise with numerous lending partners to get the funding you need with the
+                        credit terms you deserve. We will handle all of the paperwork to ensure your funding
+                        applications are approved and successfully funded, or you pay nothing.</p>
                     </div>
                   </div>
                 </div>
-                <!-- Tier 3 -->
-                <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
-                  <div class="single-pricing-area">
-                    <div class="pricing-box">
-                      <h3>Premium Funding</h3>
-                      <div class="space26"></div>
-                      <p>Comprehensive solutions for maximum capital acquisition.</p>
-                      <div class="space38"></div>
-                      <h2>$2K* <span>/Per Month</span> <img src="/img/elements/elements19.png" alt="" class="elements19 keyframe5" /></h2>
-                      <div class="space32"></div>
-                      <ul>
-                        <li><img src="/img/icons/arrow1.svg" alt="" />Funding $100,000+</li>
-                        <li><img src="/img/icons/arrow1.svg" alt="" />Full Corporate Strategy</li>
-                        <li><img src="/img/icons/arrow1.svg" alt="" />Dedicated Funding Manager</li>
-                        <li><img src="/img/icons/arrow1.svg" alt="" />Unlimited Consultation</li>
-                      </ul>
-                      <div class="space32"></div>
-                      <div class="btn-area1">
-                        <a href="#" class="vl-btn3 book-call-trigger">Get Started</a>
+              </div>
+              <div class="space30"></div>
+              <div class="row">
+                <div class="col-lg-12">
+                  <div class="tab-content">
+                    <div id="monthly">
+                      <div class="row">
+                        <!-- Tier 1 -->
+                        <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
+                          <div class="single-pricing-area">
+                            <div class="pricing-box">
+                              <h3>Starter Funding</h3>
+                              <div class="space26"></div>
+                              <p>Perfect for new businesses looking for initial capital injections.</p>
+                              <div class="space38"></div>
+                              <h2>$499 <span>Processing Fee</span> <img src="/img/elements/elements19.png" alt=""
+                                  class="elements19 keyframe5" /></h2>
+                              <div class="space32"></div>
+                              <ul>
+                                <li><img src="/img/icons/arrow1.svg" alt="" />Funding up to $20,000</li>
+                                <li><img src="/img/icons/arrow1.svg" alt="" />Credit Analysis</li>
+                                <li><img src="/img/icons/arrow1.svg" alt="" />Basic Consulting</li>
+                                <li style="display: flex; align-items: flex-start; gap: 10px;"><img
+                                    src="/img/icons/arrow1.svg" alt=""
+                                    style="flex-shrink: 0; margin-top: 5px;" /><span>* Processing fee 100% refundable if
+                                    funding not approved</span></li>
+                              </ul>
+                              <div class="space32"></div>
+                              <div class="btn-area1">
+                                <a href="#" class="vl-btn3 funding-widget-trigger">Get Started</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Tier 2 -->
+                        <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
+                          <div class="single-pricing-area active">
+                            <div class="pricing-box">
+                              <h3>Growth Funding</h3>
+                              <div class="space26"></div>
+                              <p>Designed for established businesses ready to scale operations.</p>
+                              <div class="space38"></div>
+                              <h2>$799 <span>Processing Fee</span> <img src="/img/elements/elements19.png" alt=""
+                                  class="elements19 keyframe5" /></h2>
+                              <div class="space32"></div>
+                              <ul>
+                                <li><img src="/img/icons/arrow2.svg" alt="" />Funding up to $50,000</li>
+                                <li><img src="/img/icons/arrow2.svg" alt="" />Advanced Credit Building</li>
+                                <li><img src="/img/icons/arrow2.svg" alt="" />Business Structuring</li>
+                                <li><img src="/img/icons/arrow2.svg" alt="" />Priority Support</li>
+                                <li style="display: flex; align-items: flex-start; gap: 10px;"><img
+                                    src="/img/icons/arrow2.svg" alt=""
+                                    style="flex-shrink: 0; margin-top: 5px;" /><span>* Processing fee 100% refundable if
+                                    funding not approved</span></li>
+                              </ul>
+                              <div class="space32"></div>
+                              <div class="btn-area1">
+                                <a href="#" class="vl-btn3 funding-widget-trigger">Get Started</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Tier 3 -->
+                        <div class="col-lg-4 col-md-6" data-aos="flip-right" data-aos-duration="800">
+                          <div class="single-pricing-area">
+                            <div class="pricing-box">
+                              <h3>Premium Funding</h3>
+                              <div class="space26"></div>
+                              <p>Comprehensive solutions for maximum capital acquisition.</p>
+                              <div class="space38"></div>
+                              <h2>$2K* <span>Processing Fee</span> <img src="/img/elements/elements19.png" alt=""
+                                  class="elements19 keyframe5" /></h2>
+                              <div class="space32"></div>
+                              <ul>
+                                <li><img src="/img/icons/arrow1.svg" alt="" />Funding $100,000+</li>
+                                <li><img src="/img/icons/arrow1.svg" alt="" />Full Corporate Strategy</li>
+                                <li><img src="/img/icons/arrow1.svg" alt="" />Dedicated Funding Manager</li>
+                                <li><img src="/img/icons/arrow1.svg" alt="" />Unlimited Consultation</li>
+                                <li style="display: flex; align-items: flex-start; gap: 10px;"><img
+                                    src="/img/icons/arrow1.svg" alt=""
+                                    style="flex-shrink: 0; margin-top: 5px;" /><span>* Processing fee 100% refundable if
+                                    funding not approved</span></li>
+                              </ul>
+                              <div class="space32"></div>
+                              <div class="btn-area1">
+                                <a href="#" class="vl-btn3 funding-widget-trigger">Get Started</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -155,13 +216,8 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== PRICING AREA ENDS ======= -->
+          <!-- ===== PRICING AREA ENDS ======= -->
 
-  <!-- Tradeline Widget Scripts (external to comply with CSP) -->
-  <script src="/js/widget-config.js"></script>
-  <script src="/widget/tradeline-widget.iife.js?v=<%= Date.now() %>"></script>
-
+          <!-- Tradeline Widget Scripts (external to comply with CSP) -->
+          <script src="/js/widget-config.js"></script>
+          <script src="/widget/tradeline-widget.iife.js?v=<%= Date.now() %>"></script>

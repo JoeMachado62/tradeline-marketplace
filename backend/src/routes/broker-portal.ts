@@ -17,27 +17,27 @@ const orderService = getOrderService();
  * Broker login via Email + Password
  */
 router.post(
-  "/login",
-  validate([
-    body("email").isEmail().normalizeEmail(),
-    body("password").notEmpty().withMessage("Password is required"),
-  ]),
-  async (req: Request, res: Response) => {
-    try {
-        const { email, password } = req.body;
-        const result = await authService.brokerLogin(email, password);
-        
-        res.json({
-            success: true,
-            ...result
-        });
-    } catch (error: any) {
-        res.status(401).json({
-            error: error.message || "Login failed",
-            code: "LOGIN_FAILED"
-        });
+    "/login",
+    validate([
+        body("email").isEmail().normalizeEmail(),
+        body("password").notEmpty().withMessage("Password is required"),
+    ]),
+    async (req: Request, res: Response) => {
+        try {
+            const { email, password } = req.body;
+            const result = await authService.brokerLogin(email, password);
+
+            res.json({
+                success: true,
+                ...result
+            });
+        } catch (error: any) {
+            res.status(401).json({
+                error: error.message || "Login failed",
+                code: "LOGIN_FAILED"
+            });
+        }
     }
-  }
 );
 
 /**
@@ -63,11 +63,14 @@ router.get(
                     revenue_share_percent: true,
                     markup_type: true,
                     markup_value: true,
+                    allow_promo_codes: true,
+                    primary_color: true,
+                    secondary_color: true,
                 }
             });
 
             if (!broker) {
-                 return res.status(404).json({ error: "Broker not found" });
+                return res.status(404).json({ error: "Broker not found" });
             }
 
             return res.json({ success: true, broker });
@@ -87,15 +90,21 @@ router.put(
     validate([
         body("markup_type").optional().isIn(["PERCENTAGE", "FIXED"]),
         body("markup_value").optional().isFloat({ min: 0 }),
+        body("allow_promo_codes").optional().isBoolean(),
+        body("primary_color").optional().isHexColor(),
+        body("secondary_color").optional().isHexColor(),
     ]),
     async (req: Request, res: Response) => {
         try {
-            const { markup_type, markup_value } = req.body;
-            
+            const { markup_type, markup_value, allow_promo_codes, primary_color, secondary_color } = req.body;
+
             const updateData: any = {};
             if (markup_type !== undefined) updateData.markup_type = markup_type;
             if (markup_value !== undefined) updateData.markup_value = parseFloat(markup_value);
-            
+            if (allow_promo_codes !== undefined) updateData.allow_promo_codes = allow_promo_codes;
+            if (primary_color !== undefined) updateData.primary_color = primary_color;
+            if (secondary_color !== undefined) updateData.secondary_color = secondary_color;
+
             const broker = await prisma.broker.update({
                 where: { id: req.broker.id },
                 data: updateData,
@@ -108,8 +117,8 @@ router.put(
                 }
             });
 
-            return res.json({ 
-                success: true, 
+            return res.json({
+                success: true,
                 broker,
                 message: "Settings updated successfully"
             });
@@ -163,6 +172,50 @@ router.get(
         }
     }
 );
+
+/**
+ * GET /api/portal/broker/documents/:type/:filename
+ * Serve uploaded documents safely
+ */
+router.get("/documents/:type/*", authenticateBrokerJWT, async (req: Request, res: Response) => {
+    try {
+        const type = req.params.type;
+        const filename = req.params[0]; // Capture wildcard
+        const { S3Service } = require("../services/S3Service");
+
+        if (!["id_document", "ssn_document"].includes(type)) {
+            return res.status(400).json({ error: "Invalid document type" });
+        }
+
+        if (S3Service.isConfigured()) {
+            const signedUrl = await S3Service.getSignedUrl(filename);
+            return res.json({ success: true, url: signedUrl });
+        }
+
+        // Fallback for local files
+        const path = require("path");
+        const fs = require("fs");
+        const filePath = path.join(process.cwd(), "uploads", "documents", filename);
+
+        if (fs.existsSync(filePath)) {
+            const ext = path.extname(filename).toLowerCase();
+            const contentTypes: Record<string, string> = {
+                ".pdf": "application/pdf",
+                ".jpg": "image/jpeg",
+                ".png": "image/png"
+            };
+            res.setHeader("Content-Type", contentTypes[ext] || "application/octet-stream");
+            const fileStream = fs.createReadStream(filePath);
+            fileStream.pipe(res);
+            return;
+        }
+
+        return res.status(404).json({ error: "Document not found" });
+    } catch (error) {
+        console.error("Document serve error:", error);
+        return res.status(500).json({ error: "Failed to serve document" });
+    }
+});
 
 export default router;
 

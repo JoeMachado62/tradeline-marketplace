@@ -1,0 +1,2 @@
+[console_scripts]
+oagi = oagi.cli.main:main

@@ -92,16 +92,16 @@ export class PricingEngine {
   private async getTradelines(): Promise<any[]> {
     const cacheKey = "tradelines_all";
     const cached = await this.cache.get<any[]>(cacheKey);
-    
+
     if (cached) {
       return cached;
     }
-    
+
     const freshData = await this.api.getPricing();
-    
+
     // Cache for 15 minutes
     await this.cache.set(cacheKey, freshData, 60 * 15);
-    
+
     return freshData;
   }
 
@@ -124,7 +124,7 @@ export class PricingEngine {
    */
   private calculateTradelinePricing(tradeline: any, broker: Broker): TradelineWithPricing {
     const basePrice = tradeline.price as number;
-    
+
     // Calculate broker markup (percentage or fixed amount)
     let markup = 0;
     if (broker.markup_type === "PERCENTAGE") {
@@ -132,14 +132,14 @@ export class PricingEngine {
     } else {
       markup = broker.markup_value;
     }
-    
+
     // Customer price = base + markup (revenue share is NOT added to price)
     const customerPrice = basePrice + markup;
-    
+
     // Revenue share is broker's commission on base price
     const revenueSharePercent = broker.revenue_share_percent / 100;
     const revenueShare = basePrice * revenueSharePercent;
-    
+
     // Total broker commission = revenue share + full markup
     const brokerCommission = revenueShare + markup;
 
@@ -197,11 +197,11 @@ export class PricingEngine {
         unitCustomerPrice = priced.customer_price;
       } else {
         // Direct platform sale (no broker)
-        unitCustomerPrice = unitBase; 
+        unitCustomerPrice = unitBase;
       }
 
       const quantity = item.quantity;
-      
+
       return {
         card_id: item.card_id,
         bank_name: tradeline.bank_name,
@@ -216,7 +216,7 @@ export class PricingEngine {
 
     // --- APPLY VOLUME DISCOUNT IF 10-30OFF IS ACTIVE ---
     let multiLineDiscount = 0;
-    
+
     if (promoCode === "10-30OFF") {
       // 1. Flatten items based on quantity for sorting
       let flatItems: any[] = [];
@@ -239,7 +239,22 @@ export class PricingEngine {
         if (discountPercent > 0) {
           const discountAmount = item.customer_price * discountPercent;
           multiLineDiscount += discountAmount;
+
+          // Apply discount to price
           item.customer_price -= discountAmount;
+
+          // Pro-rate commission and base price logic:
+          // If we discount the total price by X%, we reduce the revenue share and markup AND base by the same ratio (simple pro-rating)
+          // OR, based on user request: "Broker revenue share needs to be calculated on base price minus discounts."
+          // User Example for $250 final (discounted from something higher): 
+          //   Adj Customer Price = $200 (Base portion) + $50 (Markup?) NO...
+          // User said: "base price minus discounts. This we would call the revenue share portion... The percentage markup is the amount above that adjusted price"
+          // This is complex to reverse engineer perfectly without exact original base.
+          // However, the cleanest mathematical way to respect the discount is to scale EVERYTHING down by (1 - discountPercent).
+
+          item.broker_revenue_share = item.broker_revenue_share * (1 - discountPercent);
+          item.broker_markup = item.broker_markup * (1 - discountPercent);
+          item.base_price = item.base_price * (1 - discountPercent);
         }
       });
 
@@ -248,11 +263,15 @@ export class PricingEngine {
       // This is slightly complex because items might have quantity > 1.
       // Easiest is to sum everything from flatItems.
       totalCustomerPrice = flatItems.reduce((sum, item) => sum + item.customer_price, 0);
-      
+
       // Update original sums for consistency
       subtotalBase = flatItems.reduce((sum, item) => sum + item.base_price, 0);
       totalRevenueShare = flatItems.reduce((sum, item) => sum + item.broker_revenue_share, 0);
       totalBrokerMarkup = flatItems.reduce((sum, item) => sum + item.broker_markup, 0);
+
+      // Update calculationItems to reflect the discounted items (flattened)
+      // This ensures Order Items created in DB reflect the actual discounted amounts
+      calculationItems = flatItems;
     } else {
       // Standard non-discounted calculation
       calculationItems.forEach(item => {
@@ -262,7 +281,7 @@ export class PricingEngine {
         totalCustomerPrice += item.customer_price * item.quantity;
       });
     }
-    
+
     // Platform Revenue = 50% of Base (simplified)
     totalPlatformRevenue = subtotalBase * 0.5;
 

@@ -47,17 +47,18 @@ export declare class PricingEngine {
      */
     private calculateTradelinePricing;
     /**
-     * Calculate total order price with all splits
+     * Calculate total order price with all splits and volume discounts
      */
     calculateOrderTotal(items: Array<{
         card_id: string;
         quantity: number;
-    }>, brokerId?: string): Promise<{
+    }>, brokerId?: string, promoCode?: string): Promise<{
         subtotal_base: number;
         total_revenue_share: number;
         total_broker_markup: number;
         total_platform_revenue: number;
         total_customer_price: number;
+        multi_line_discount: number;
         items: {
             card_id: string;
             bank_name: any;
@@ -66,6 +67,7 @@ export declare class PricingEngine {
             broker_revenue_share: number;
             broker_markup: number;
             customer_price: number;
+            original_price: number;
         }[];
     }>;
 }

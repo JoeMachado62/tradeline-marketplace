@@ -69,7 +69,7 @@ export const config = {
     port: parseInt(process.env.EMAIL_PORT || "587", 10),
     user: process.env.EMAIL_USERNAME || "apikey",
     password: process.env.EMAIL_PASSWORD || "",
-    from: process.env.EMAIL_FROM || "notifications@ezwai.com",
+    from: process.env.EMAIL_FROM || "support@tradelinerental.com",
     adminEmail: process.env.ADMIN_EMAIL || "joe@ezwai.com",
   },
 };

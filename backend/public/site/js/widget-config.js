@@ -3,7 +3,7 @@
 window.TL_WIDGET_CONFIG = {
   // API URL - widget appends /public/... so we just need /api
   apiUrl: window.location.origin + '/api',
-  apiKey: 'tlm_02c2488d6724e0383c4f5cc870da89aa176e4eee615b747de6d89d3a5adc787e',
+  apiKey: 'tlm_21720a89f9f628ed782536045ed72cdcb95d928b7fbc580bf6db43b4811228eb',
   theme: {
     primaryColor: '#032530',
     accentColor: '#F4D445'

@@ -121,9 +121,9 @@ class PricingEngine {
         };
     }
     /**
-     * Calculate total order price with all splits
+     * Calculate total order price with all splits and volume discounts
      */
-    async calculateOrderTotal(items, brokerId) {
+    async calculateOrderTotal(items, brokerId, promoCode) {
         // Get base pricing
         const pricing = await this.getTradelines();
         const pricingMap = new Map(pricing.map((p) => [p.card_id, p]));
@@ -136,7 +136,7 @@ class PricingEngine {
         let totalBrokerMarkup = 0;
         let totalCustomerPrice = 0;
         let totalPlatformRevenue = 0;
-        const calculationItems = items.map((item) => {
+        let calculationItems = items.map((item) => {
             const tradeline = pricingMap.get(item.card_id);
             if (!tradeline) {
                 throw new Error(`Tradeline ${item.card_id} not found`);
@@ -155,13 +155,9 @@ class PricingEngine {
             }
             else {
                 // Direct platform sale (no broker)
-                unitCustomerPrice = unitBase; // Or some direct markdown?
+                unitCustomerPrice = unitBase;
             }
             const quantity = item.quantity;
-            subtotalBase += unitBase * quantity;
-            totalRevenueShare += unitRevenueShare * quantity;
-            totalBrokerMarkup += unitMarkup * quantity;
-            totalCustomerPrice += unitCustomerPrice * quantity;
             return {
                 card_id: item.card_id,
                 bank_name: tradeline.bank_name,
@@ -169,11 +165,72 @@ class PricingEngine {
                 base_price: unitBase,
                 broker_revenue_share: unitRevenueShare,
                 broker_markup: unitMarkup,
-                customer_price: unitCustomerPrice
+                customer_price: unitCustomerPrice,
+                original_price: unitCustomerPrice // Keep track for discount display
             };
         });
-        // Platform Revenue = 50% of Base + Remainder of Revenue Share?
-        // Let's keep it simple: Platform Net = 50% of Base
+        // --- APPLY VOLUME DISCOUNT IF 10-30OFF IS ACTIVE ---
+        let multiLineDiscount = 0;
+        if (promoCode === "10-30OFF") {
+            // 1. Flatten items based on quantity for sorting
+            let flatItems = [];
+            calculationItems.forEach(item => {
+                for (let i = 0; i < item.quantity; i++) {
+                    flatItems.push({ ...item, quantity: 1 });
+                }
+            });
+            // 2. Sort by purchase price (Highest to Lowest)
+            flatItems.sort((a, b) => b.customer_price - a.customer_price);
+            // 3. Apply discounts based on index
+            flatItems.forEach((item, index) => {
+                let discountPercent = 0;
+                if (index === 1)
+                    discountPercent = 0.10; // 2nd line
+                else if (index === 2)
+                    discountPercent = 0.20; // 3rd line
+                else if (index >= 3)
+                    discountPercent = 0.30; // 4th+ line
+                if (discountPercent > 0) {
+                    const discountAmount = item.customer_price * discountPercent;
+                    multiLineDiscount += discountAmount;
+                    // Apply discount to price
+                    item.customer_price -= discountAmount;
+                    // Pro-rate commission and base price logic:
+                    // If we discount the total price by X%, we reduce the revenue share and markup AND base by the same ratio (simple pro-rating)
+                    // OR, based on user request: "Broker revenue share needs to be calculated on base price minus discounts."
+                    // User Example for $250 final (discounted from something higher): 
+                    //   Adj Customer Price = $200 (Base portion) + $50 (Markup?) NO...
+                    // User said: "base price minus discounts. This we would call the revenue share portion... The percentage markup is the amount above that adjusted price"
+                    // This is complex to reverse engineer perfectly without exact original base.
+                    // However, the cleanest mathematical way to respect the discount is to scale EVERYTHING down by (1 - discountPercent).
+                    item.broker_revenue_share = item.broker_revenue_share * (1 - discountPercent);
+                    item.broker_markup = item.broker_markup * (1 - discountPercent);
+                    item.base_price = item.base_price * (1 - discountPercent);
+                }
+            });
+            // 4. Rebuild calculationItems with combined discounts
+            // Note: We'll just update the totals, but we need to keep the structure.
+            // This is slightly complex because items might have quantity > 1.
+            // Easiest is to sum everything from flatItems.
+            totalCustomerPrice = flatItems.reduce((sum, item) => sum + item.customer_price, 0);
+            // Update original sums for consistency
+            subtotalBase = flatItems.reduce((sum, item) => sum + item.base_price, 0);
+            totalRevenueShare = flatItems.reduce((sum, item) => sum + item.broker_revenue_share, 0);
+            totalBrokerMarkup = flatItems.reduce((sum, item) => sum + item.broker_markup, 0);
+            // Update calculationItems to reflect the discounted items (flattened)
+            // This ensures Order Items created in DB reflect the actual discounted amounts
+            calculationItems = flatItems;
+        }
+        else {
+            // Standard non-discounted calculation
+            calculationItems.forEach(item => {
+                subtotalBase += item.base_price * item.quantity;
+                totalRevenueShare += item.broker_revenue_share * item.quantity;
+                totalBrokerMarkup += item.broker_markup * item.quantity;
+                totalCustomerPrice += item.customer_price * item.quantity;
+            });
+        }
+        // Platform Revenue = 50% of Base (simplified)
         totalPlatformRevenue = subtotalBase * 0.5;
         return {
             subtotal_base: subtotalBase,
@@ -181,6 +238,7 @@ class PricingEngine {
             total_broker_markup: totalBrokerMarkup,
             total_platform_revenue: totalPlatformRevenue,
             total_customer_price: totalCustomerPrice,
+            multi_line_discount: multiLineDiscount,
             items: calculationItems
         };
     }

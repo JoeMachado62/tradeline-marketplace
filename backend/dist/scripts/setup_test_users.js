@@ -70,7 +70,7 @@ async function setupTestUsers() {
             password_hash: passwordHash,
             name: "Test Client User",
             phone: "555-123-4567",
-            excluded_banks: []
+            excluded_banks: "[]"
         }
     });
     console.log(`   ✅ Client: ${client.email}`);

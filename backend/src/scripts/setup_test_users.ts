@@ -11,7 +11,7 @@ const TEST_EMAIL_CLIENT = "testclient@example.com";
 
 async function setupTestUsers() {
   console.log("🔧 Setting up test users with password:", TEST_PASSWORD);
-  
+
   const passwordHash = await bcrypt.hash(TEST_PASSWORD, 10);
   console.log("Password hash generated.");
 
@@ -73,7 +73,7 @@ async function setupTestUsers() {
       password_hash: passwordHash,
       name: "Test Client User",
       phone: "555-123-4567",
-      excluded_banks: []
+      excluded_banks: "[]"
     }
   });
   console.log(`   ✅ Client: ${client.email}`);

@@ -61,43 +61,47 @@ router.post(
 
 // GET /api/portal/profile
 router.get("/profile", authenticateClient, async (req: Request, res: Response) => {
-    try {
-        const client = req.client;
-        // Refetch to ensure latest data
-        const freshClient = await prisma.client.findUnique({ where: { id: client.id } });
-        
-        if (!freshClient) {
-             res.status(404).json({ error: "Client not found" });
-             return;
-        }
+  try {
+    const client = req.client;
+    // Refetch to ensure latest data
+    const freshClient = await prisma.client.findUnique({ where: { id: client.id } });
 
-        res.json({
-            success: true,
-            client: {
-                id: freshClient.id,
-                name: freshClient.name,
-                email: freshClient.email,
-                phone: freshClient.phone,
-                has_signed_agreement: !!freshClient.signed_agreement_date,
-                signed_agreement_date: freshClient.signed_agreement_date
-            }
-        });
-    } catch (error) {
-        console.error("Fetch profile error:", error);
-        res.status(500).json({ error: "Failed to fetch profile" });
+    if (!freshClient) {
+      res.status(404).json({ error: "Client not found" });
+      return;
     }
+
+    res.json({
+      success: true,
+      client: {
+        id: freshClient.id,
+        name: freshClient.name,
+        email: freshClient.email,
+        phone: freshClient.phone,
+        has_signed_agreement: !!freshClient.signed_agreement_date,
+        signed_agreement_date: freshClient.signed_agreement_date,
+        id_document_uploaded: !!freshClient.id_document_path, // Boolean for UI
+        ssn_document_uploaded: !!freshClient.ssn_document_path, // Boolean for UI
+        // We don't return the path itself for security, 
+        // but we could add a specific endpoint to download them if needed.
+      }
+    });
+  } catch (error) {
+    console.error("Fetch profile error:", error);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
 });
 
 // GET /api/portal/orders - My Orders
 router.get("/orders", authenticateClient, async (req: Request, res: Response) => {
   try {
     const client = req.client;
-    
+
     const orders = await prisma.order.findMany({
       where: { client_id: client.id },
-      include: { 
-         items: true,
-         broker: { select: { name: true, business_name: true, phone: true, email: true }} // Client sees who they bought from?
+      include: {
+        items: true,
+        broker: { select: { name: true, business_name: true, phone: true, email: true } } // Client sees who they bought from?
       },
       orderBy: { created_at: "desc" },
     });
@@ -118,39 +122,39 @@ router.get("/orders", authenticateClient, async (req: Request, res: Response) =>
 
 // GET /api/portal/orders/:id - Order Details
 router.get(
-    "/orders/:id", 
-    authenticateClient,
-    validate([param("id").isUUID()]),
-    async (req: Request, res: Response) => {
+  "/orders/:id",
+  authenticateClient,
+  validate([param("id").isUUID()]),
+  async (req: Request, res: Response) => {
     try {
       const client = req.client;
       const orderId = req.params.id;
-      
+
       const order = await prisma.order.findFirst({
-        where: { 
-            id: orderId,
-            client_id: client.id 
+        where: {
+          id: orderId,
+          client_id: client.id
         },
         include: {
-            items: true,
-            broker: { 
-                select: { 
-                    name: true, 
-                    business_name: true, 
-                    email: true, 
-                    phone: true,
-                    // If we have custom payment instructions per broker, fetch here
-                    // e.g. broker.payment_instructions
-                } 
+          items: true,
+          broker: {
+            select: {
+              name: true,
+              business_name: true,
+              email: true,
+              phone: true,
+              // If we have custom payment instructions per broker, fetch here
+              // e.g. broker.payment_instructions
             }
+          }
         }
       });
-  
+
       if (!order) {
-         res.status(404).json({ error: "Order not found" });
-         return;
+        res.status(404).json({ error: "Order not found" });
+        return;
       }
-  
+
       res.json({
         success: true,
         order: {
@@ -176,7 +180,7 @@ router.post(
       const { email } = req.body;
 
       const client = await prisma.client.findUnique({ where: { email } });
-      
+
       // Always return success to prevent email enumeration
       if (!client) {
         res.json({ success: true, message: "If an account exists, a reset link will be sent." });
@@ -202,11 +206,11 @@ router.post(
       const resetUrl = `${baseUrl}/portal/reset-password?token=${resetToken}`;
 
       await getEmailService().sendPasswordReset(email, resetToken);
-      
+
       console.log(`Password reset sent to ${email}`);
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: "If an account exists, a reset link will be sent.",
         // DEV ONLY - remove in production:
         ...(process.env.NODE_ENV !== 'production' && { resetUrl })

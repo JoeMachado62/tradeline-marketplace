@@ -1,8 +1,11 @@
-import { Order, OrderStatus, PaymentMethod } from "@prisma/client";
+import { Order } from "@prisma/client";
+export type OrderStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "CANCELLED" | "REFUNDED";
+export type PaymentMethod = "STRIPE" | "MANUAL" | "ZELLE" | "CASHAPP" | "VENMO";
 export declare class OrderService {
     private pricingEngine;
     private tradelineAPI;
     private cache;
+    private emailService;
     /**
      * Generate human-readable order number
      */
@@ -21,6 +24,7 @@ export declare class OrderService {
         }>;
         stripe_session_id?: string;
         client_id?: string;
+        promoCode?: string;
     }): Promise<Order>;
     /**
      * Process successful payment and create TradelineSupply order
@@ -31,9 +35,14 @@ export declare class OrderService {
      */
     handlePaymentFailed(orderId: string, reason?: string): Promise<void>;
     /**
-     * Record a payment made manually (Cash, Wire, etc.)
+     * Record a payment made manually (Cash, Wire, etc.) and trigger LUX Bot
      */
     recordManualPayment(orderId: string, paymentMethod: PaymentMethod, adminId: string): Promise<Order>;
+    /**
+     * Trigger the LUX Bot to fulfill an order on TradelineSupply.com
+     * Runs asynchronously to not block the API response
+     */
+    private triggerLuxBot;
     /**
      * Get order details with commission breakdown
      */

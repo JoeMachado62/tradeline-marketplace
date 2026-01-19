@@ -101,7 +101,7 @@ router.post(
       const calculation = await pricingEngine.calculateOrderTotal(
         items,
         broker.id,
-        promo_code
+        broker.allow_promo_codes !== false ? promo_code : undefined
       );
 
       res.json({
@@ -244,10 +244,11 @@ router.get(
             enable_cart: true,
             max_items_per_order: 10,
             max_quantity_per_item: 3,
+            allow_promo_codes: broker.allow_promo_codes,
           },
           theme: {
-            primary_color: "#2563eb",
-            secondary_color: "#64748b",
+            primary_color: broker.primary_color || "#032530",
+            secondary_color: broker.secondary_color || "#F4D445",
             success_color: "#16a34a",
             error_color: "#dc2626",
             font_family: "Inter, system-ui, sans-serif",
@@ -282,37 +283,37 @@ router.post(
       const path = require("path");
       const bcrypt = require("bcryptjs");
       const { S3Service } = require("../services/S3Service");
-      
+
       // Use memory storage for S3 uploads
       const storage = multer.memoryStorage();
-      
-      const upload = multer({ 
+
+      const upload = multer({
         storage,
         limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
         fileFilter: (_req: any, file: any, cb: any) => {
           const allowed = /jpeg|jpg|png|gif|pdf|webp|heic|heif/;
           const ext = path.extname(file.originalname).toLowerCase();
           // Check if extension matches (ignoring the dot) or contains the string
-          const extValid = allowed.test(ext); 
+          const extValid = allowed.test(ext);
           const mimeValid = allowed.test(file.mimetype);
-          
+
           if (extValid && mimeValid) {
-             cb(null, true);
+            cb(null, true);
           } else {
-             cb(new Error(`File type ${file.mimetype} or extension ${ext} not allowed. Only Images (JPG, PNG, HEIC) and PDFs are accepted.`));
+            cb(new Error(`File type ${file.mimetype} or extension ${ext} not allowed. Only Images (JPG, PNG, HEIC) and PDFs are accepted.`));
           }
         }
       }).fields([
         { name: "id_document", maxCount: 1 },
         { name: "ssn_document", maxCount: 1 }
       ]);
-      
+
       // Process upload
       upload(req, res, async (uploadErr: any) => {
         if (uploadErr) {
           return res.status(400).json({ error: uploadErr.message, code: "UPLOAD_ERROR" });
         }
-        
+
         try {
           // Parse form data
           let { email, name, phone, password, signature, date_of_birth, address } = req.body;
@@ -320,37 +321,37 @@ router.post(
           if (email) email = email.toLowerCase().trim();
 
           let items = req.body.items;
-          
+
           // Items come as JSON string from FormData
           if (typeof items === "string") {
             items = JSON.parse(items);
           }
-          
+
           if (!email || !name || !items || items.length === 0) {
             return res.status(400).json({ error: "Missing required fields", code: "VALIDATION_ERROR" });
           }
-          
+
           const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-          
+
           // Create or find client first to get ID for S3 paths
           let client = await prisma.client.findUnique({ where: { email } });
           const clientId = client?.id || require("crypto").randomUUID();
-          
+
           // Upload documents to S3 if present
           let idDocPath: string | null = null;
           let ssnDocPath: string | null = null;
-          
+
           if (S3Service.isConfigured()) {
             const idDocFile = files?.id_document?.[0];
             const ssnDocFile = files?.ssn_document?.[0];
-            
+
             if (idDocFile) {
               const key = S3Service.generateKey("id_document", clientId, idDocFile.originalname);
               const result = await S3Service.upload(idDocFile.buffer, key, idDocFile.mimetype);
               idDocPath = result.key; // Store S3 key, not full URL
               console.log(`Uploaded ID document to S3: ${key}`);
             }
-            
+
             if (ssnDocFile) {
               const key = S3Service.generateKey("ssn_document", clientId, ssnDocFile.originalname);
               const result = await S3Service.upload(ssnDocFile.buffer, key, ssnDocFile.mimetype);
@@ -360,7 +361,7 @@ router.post(
           } else {
             console.warn("S3 not configured - documents will not be stored!");
           }
-          
+
           // 1. Upsert Client
           const updateData: any = {
             name,
@@ -371,7 +372,7 @@ router.post(
             ...(ssnDocPath ? { ssn_document_path: ssnDocPath } : {}),
             ...(signature ? { signature, signed_agreement_date: new Date() } : {})
           };
-          
+
           if (client) {
             client = await prisma.client.update({
               where: { id: client.id },
@@ -394,7 +395,7 @@ router.post(
           const orderService = getOrderService();
 
           const { promo_code } = req.body;
-          
+
           const order = await orderService.createOrder({
             broker_id: broker.id,
             client_id: client.id,
@@ -402,7 +403,7 @@ router.post(
             customer_name: name,
             customer_phone: phone,
             items: items,
-            promoCode: promo_code
+            promoCode: broker.allow_promo_codes !== false ? promo_code : undefined
           });
 
           // 3. Track Analytics
@@ -416,7 +417,7 @@ router.post(
             },
             update: {
               checkout_starts: { increment: 1 },
-              orders_count: { increment: 1 }, 
+              orders_count: { increment: 1 },
             },
             create: {
               broker_id: broker.id,
@@ -428,12 +429,12 @@ router.post(
 
           // 4. Send confirmation emails (async, don't block response)
           const emailService = getEmailService();
-          
+
           // Send customer order confirmation
           emailService.sendOrderConfirmation(order).catch((err: Error) => {
             console.error("Failed to send order confirmation email:", err.message);
           });
-          
+
           // Send admin notification
           emailService.sendNewOrderAdminNotification(order).catch((err: Error) => {
             console.error("Failed to send admin notification email:", err.message);
@@ -442,11 +443,11 @@ router.post(
           // Determine Base URL dynamically
           let baseUrl = process.env.PUBLIC_URL;
           if (!baseUrl) {
-             const protocol = req.protocol;
-             const host = req.get('host');
-             baseUrl = `${protocol}://${host}`;
+            const protocol = req.protocol;
+            const host = req.get('host');
+            baseUrl = `${protocol}://${host}`;
           }
-          
+
           res.json({
             success: true,
             order_id: order.id,
@@ -457,7 +458,7 @@ router.post(
             message: "Order submitted successfully! Check your email for payment instructions."
           });
           return;
-          
+
         } catch (error: any) {
           console.error("Checkout processing error:", error);
           res.status(500).json({

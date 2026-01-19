@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { getEmailService } from "../services/EmailService";
 
 const router = Router();
 
@@ -116,7 +117,7 @@ const caseStudies: { [key: number]: any } = {
 router.get("/case-study/:id", (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     const caseStudy = caseStudies[id];
-    
+
     if (!caseStudy) {
         return res.status(404).render("404", {
             title: "Case Study Not Found | TradelineRental.com",
@@ -125,7 +126,7 @@ router.get("/case-study/:id", (req: Request, res: Response) => {
             extra_css: ""
         });
     }
-    
+
     res.render("case-study", {
         title: `${caseStudy.title} | TradelineRental.com`,
         html_attribute: 'class="no-js"',
@@ -133,6 +134,54 @@ router.get("/case-study/:id", (req: Request, res: Response) => {
         extra_css: "",
         caseStudy: caseStudy
     });
+});
+
+// Privacy Policy
+router.get("/privacy-policy", (_req: Request, res: Response) => {
+    res.render("policy/privacy", {
+        title: "Privacy Policy | TradelineRental.com",
+        html_attribute: 'class="no-js"',
+        body_attribute: 'class="body-bg3"',
+        extra_css: "",
+        currentPath: "/privacy-policy"
+    });
+});
+
+// Terms and Conditions
+router.get("/terms-and-conditions", (_req: Request, res: Response) => {
+    res.render("policy/terms", {
+        title: "Terms & Conditions | TradelineRental.com",
+        html_attribute: 'class="no-js"',
+        body_attribute: 'class="body-bg3"',
+        extra_css: "",
+        currentPath: "/terms-and-conditions"
+    });
+});
+
+// Contact Form Submission
+router.post("/contact-submission", async (req: Request, res: Response) => {
+    try {
+        const { firstName, lastName, email, phone, subject, message } = req.body;
+
+        // Basic validation
+        if (!firstName || !lastName || !email || !phone || !subject || !message) {
+            return res.status(400).json({ error: "All fields are required" });
+        }
+
+        await getEmailService().sendContactFormSubmission({
+            firstName,
+            lastName,
+            email,
+            phone,
+            subject,
+            message
+        });
+
+        return res.json({ success: true, message: "Message sent successfully" });
+    } catch (error) {
+        console.error("Error sending contact form:", error);
+        return res.status(500).json({ error: "Failed to send message" });
+    }
 });
 
 export default router;

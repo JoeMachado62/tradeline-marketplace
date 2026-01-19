@@ -192,12 +192,12 @@ export class OrderService {
     }
 
     if (order.status !== "PENDING" && order.status !== "FAILED") {
-       // Allow reprocessing if it previously failed fulfillment
-       if ((order as any).payment_status !== "SUCCEEDED" && (paymentMethod as any) === "STRIPE") {
-         // Proceed with payment update
-       } else if ((order.status as any) !== "FAILED") {
-          throw new Error(`Order ${order.order_number} is not in a valid state for processing`);
-       }
+      // Allow reprocessing if it previously failed fulfillment
+      if ((order as any).payment_status !== "SUCCEEDED" && (paymentMethod as any) === "STRIPE") {
+        // Proceed with payment update
+      } else if ((order.status as any) !== "FAILED") {
+        throw new Error(`Order ${order.order_number} is not in a valid state for processing`);
+      }
     }
 
     // Start transaction to update order and create fulfillment
@@ -225,23 +225,23 @@ export class OrderService {
           order_id: order.order_number,
         });
 
-      // Update with TradelineSupply order ID
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          tradeline_order_id: tradelineOrder.id.toString(),
-          tradeline_order_status: tradelineOrder.status,
-          status: "COMPLETED",
-          completed_at: new Date(),
-        },
-      });
+        // Update with TradelineSupply order ID
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            tradeline_order_id: tradelineOrder.id.toString(),
+            tradeline_order_status: tradelineOrder.status,
+            status: "COMPLETED",
+            completed_at: new Date(),
+          },
+        });
 
         console.log(`TradelineSupply order created: #${tradelineOrder.id}`);
-        
+
         // Notify fulfillment
         // Use timeout to avoid blocking transaction/response
         setTimeout(() => {
-             this.emailService.sendOrderFulfilled(order).catch(e => console.error("Failed to send fulfillment email:", e));
+          this.emailService.sendOrderFulfilled(order).catch(e => console.error("Failed to send fulfillment email:", e));
         }, 1000);
 
       } catch (error) {
@@ -366,7 +366,7 @@ export class OrderService {
     // Additional logging for admin action
     await prisma.activityLog.create({
       data: {
-        admin_id: adminId, 
+        admin_id: adminId,
         action: 'MANUAL_PAYMENT_RECORDED',
         entity_type: 'Order',
         entity_id: orderId,
@@ -394,21 +394,21 @@ export class OrderService {
     try {
       const path = require('path');
       const { spawn } = require('child_process');
-      
+
       const scriptPath = path.join(process.cwd(), 'scripts', 'lux_bot.py');
-      
+
       // Collect all Card IDs from order items
       const cardIds = order.items.map((item: any) => item.card_id).join(',');
-      
+
       // Get client info
       const clientName = order.client?.name || order.customer_name || 'Client';
       const clientEmail = order.client?.email || order.customer_email;
       const promoCode = (order as any).promo_code || 'PKGDEAL';
-      
+
       console.log(`🤖 Triggering LUX Bot for Order ${order.order_number}`);
       console.log(`   Card IDs: ${cardIds}`);
       console.log(`   Client: ${clientName} (${clientEmail})`);
-      
+
       const bot = spawn('python', [
         scriptPath,
         '--order-id', order.id,
@@ -440,7 +440,7 @@ export class OrderService {
 
       // Unref so the parent process can exit independently
       bot.unref();
-      
+
     } catch (error) {
       console.error(`Failed to trigger LUX Bot:`, error);
       // Don't throw - let the order proceed even if bot fails to start
@@ -549,6 +549,21 @@ export class OrderService {
         take: limit,
         include: {
           items: true,
+          client: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              signature: true,
+              signed_agreement_date: true,
+              id_document_path: true,
+              ssn_document_path: true,
+              documents_verified: true
+            }
+          },
+          broker: {
+            select: { name: true, business_name: true }
+          }
         },
         orderBy: { created_at: "desc" },
       }),
@@ -590,7 +605,7 @@ export class OrderService {
         ),
         total_commission_usd: PricingEngine.centsToUsd(
           (summary._sum.broker_revenue_share || 0) +
-            (summary._sum.broker_markup || 0)
+          (summary._sum.broker_markup || 0)
         ),
       },
     };
@@ -652,3 +667,4 @@ export function getOrderService(): OrderService {
 }
 
 export default OrderService;
+// Force Rebuild Mon Jan  5 16:51:23 UTC 2026

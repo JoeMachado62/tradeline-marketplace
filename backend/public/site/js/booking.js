@@ -7,9 +7,9 @@
 function openBookingModal() {
   var modal = document.getElementById('bookingModal');
   if (!modal) return;
-  
+
   modal.style.display = 'block';
-  setTimeout(function() { modal.classList.add('show'); }, 10);
+  setTimeout(function () { modal.classList.add('show'); }, 10);
   document.body.style.overflow = 'hidden';
 }
 
@@ -17,28 +17,57 @@ function openBookingModal() {
 function closeBookingModal() {
   var modal = document.getElementById('bookingModal');
   if (!modal) return;
-  
+
   modal.classList.remove('show');
-  setTimeout(function() {
+  setTimeout(function () {
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }, 300);
+}
+
+// Open funding modal
+function openFundingModal() {
+  var modal = document.getElementById('fundingModal');
+  if (!modal) return;
+
+  modal.style.display = 'block';
+  setTimeout(function () { modal.classList.add('show'); }, 10);
+  document.body.style.overflow = 'hidden';
+}
+
+// Close funding modal
+function closeFundingModal() {
+  var modal = document.getElementById('fundingModal');
+  if (!modal) return;
+
+  modal.classList.remove('show');
+  setTimeout(function () {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
   }, 300);
 }
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-  
+document.addEventListener('DOMContentLoaded', function () {
+
   // Handle clicks on high-intent links
-  document.addEventListener('click', function(e) {
-    
+  document.addEventListener('click', function (e) {
+
     // Close button for booking modal
     var closeBtn = e.target.closest('.booking-modal-close');
     if (closeBtn) {
       e.preventDefault();
-      closeBookingModal();
+      // Determine which modal to close based on parent or context if needed, 
+      // but simpler to just try closing both or check closest modal
+      var modal = e.target.closest('.booking-modal-overlay');
+      if (modal && modal.id === 'fundingModal') {
+        closeFundingModal();
+      } else {
+        closeBookingModal();
+      }
       return;
     }
-    
+
     // Check for explicit booking trigger class
     var bookingTrigger = e.target.closest('.book-call-trigger');
     if (bookingTrigger) {
@@ -46,21 +75,30 @@ document.addEventListener('DOMContentLoaded', function() {
       openBookingModal();
       return;
     }
-    
+
+    // Check for funding widget trigger class
+    var fundingTrigger = e.target.closest('.funding-widget-trigger');
+    if (fundingTrigger) {
+      e.preventDefault();
+      openFundingModal();
+      return;
+    }
+
     // Check for "Book a Call" links (by text content)
     var link = e.target.closest('a');
     if (link) {
       var linkText = link.textContent.trim().toLowerCase();
-      
+
       // Match "Book a Call" links
       if (linkText.includes('book a call') || linkText.includes('book call')) {
         e.preventDefault();
         openBookingModal();
         return;
       }
-      
-      // Match "Get Started" links on pricing/service pages
-      if (link.classList.contains('readmore') && linkText.includes('get started')) {
+
+      // Match "Get Started" links on pricing/service pages - CAUTION: conflict with funding trigger?
+      // Only trigger booking if IT IS NOT a funding trigger
+      if (link.classList.contains('readmore') && linkText.includes('get started') && !link.classList.contains('funding-widget-trigger')) {
         e.preventDefault();
         openBookingModal();
         return;
@@ -69,19 +107,27 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Close on overlay click
-  var modal = document.getElementById('bookingModal');
-  if (modal) {
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) closeBookingModal();
+  var modals = document.querySelectorAll('.booking-modal-overlay');
+  modals.forEach(function (modal) {
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) {
+        if (modal.id === 'fundingModal') closeFundingModal();
+        else closeBookingModal();
+      }
     });
-  }
+  });
 
   // Close on Escape key
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
-      var modal = document.getElementById('bookingModal');
-      if (modal && modal.style.display === 'block') {
+      var bookingModal = document.getElementById('bookingModal');
+      var fundingModal = document.getElementById('fundingModal');
+
+      if (bookingModal && bookingModal.style.display === 'block') {
         closeBookingModal();
+      }
+      if (fundingModal && fundingModal.style.display === 'block') {
+        closeFundingModal();
       }
     }
   });

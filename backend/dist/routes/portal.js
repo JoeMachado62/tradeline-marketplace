@@ -12,6 +12,7 @@ const Database_1 = require("../services/Database");
 const validation_1 = require("../middleware/validation");
 const clientAuth_1 = require("../middleware/clientAuth");
 const PricingEngine_1 = require("../services/PricingEngine");
+const EmailService_1 = require("../services/EmailService");
 const router = (0, express_1.Router)();
 // POST /api/portal/login
 router.post("/login", (0, validation_1.validate)([
@@ -67,7 +68,11 @@ router.get("/profile", clientAuth_1.authenticateClient, async (req, res) => {
                 email: freshClient.email,
                 phone: freshClient.phone,
                 has_signed_agreement: !!freshClient.signed_agreement_date,
-                signed_agreement_date: freshClient.signed_agreement_date
+                signed_agreement_date: freshClient.signed_agreement_date,
+                id_document_uploaded: !!freshClient.id_document_path, // Boolean for UI
+                ssn_document_uploaded: !!freshClient.ssn_document_path, // Boolean for UI
+                // We don't return the path itself for security, 
+                // but we could add a specific endpoint to download them if needed.
             }
         });
     }
@@ -171,10 +176,8 @@ router.post("/forgot-password", (0, validation_1.validate)([
         // Build reset URL
         const baseUrl = process.env.PUBLIC_URL || "https://tradeline-marketplace-production-bcaa.up.railway.app";
         const resetUrl = `${baseUrl}/portal/reset-password?token=${resetToken}`;
-        // TODO: Send email with reset link
-        // For now, log it (in production, use email service)
-        console.log(`Password reset requested for ${email}`);
-        console.log(`Reset URL: ${resetUrl}`);
+        await (0, EmailService_1.getEmailService)().sendPasswordReset(email, resetToken);
+        console.log(`Password reset sent to ${email}`);
         res.json({
             success: true,
             message: "If an account exists, a reset link will be sent.",

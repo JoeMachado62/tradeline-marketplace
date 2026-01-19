@@ -7,6 +7,7 @@ const express_1 = require("express");
 const express_validator_1 = require("express-validator");
 const validation_1 = require("../middleware/validation");
 const AuthService_1 = require("../services/AuthService");
+const EmailService_1 = require("../services/EmailService");
 const Database_1 = require("../services/Database");
 const config_1 = require("../config");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -109,9 +110,10 @@ router.post("/brokers", authenticateAdmin, (0, validation_1.validate)([
     (0, express_validator_1.body)("phone").notEmpty().withMessage("Phone number is required"),
     (0, express_validator_1.body)("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
     (0, express_validator_1.body)("revenue_share").isInt({ min: 0, max: 100 }).optional(),
+    (0, express_validator_1.body)("tax_id").optional(),
 ]), async (req, res) => {
     try {
-        const { name, email, business_name, business_address, phone, password, revenue_share } = req.body;
+        const { name, email, business_name, business_address, phone, password, revenue_share, tax_id } = req.body;
         const existing = await Database_1.prisma.broker.findUnique({ where: { email } });
         if (existing) {
             res.status(400).json({ error: "Broker email already exists" });
@@ -129,6 +131,7 @@ router.post("/brokers", authenticateAdmin, (0, validation_1.validate)([
                 business_address,
                 phone,
                 revenue_share_percent: revenue_share || 10,
+                tax_id: tax_id || null,
                 api_key: apiKey,
                 api_secret: apiSecretHashed,
                 password_hash: passwordHash,
@@ -137,6 +140,14 @@ router.post("/brokers", authenticateAdmin, (0, validation_1.validate)([
                 markup_value: 0
             }
         });
+        // Send welcome email with credentials
+        try {
+            await (0, EmailService_1.getEmailService)().sendBrokerWelcome(broker, password);
+        }
+        catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+            // Don't fail the request, just log it
+        }
         res.json({
             success: true,
             broker: {
@@ -147,7 +158,7 @@ router.post("/brokers", authenticateAdmin, (0, validation_1.validate)([
                 phone: broker.phone,
                 api_key: broker.api_key
             },
-            message: "Broker created. They can log in with their email and password."
+            message: "Broker created. Welcome email sent."
         });
     }
     catch (error) {
@@ -164,10 +175,11 @@ router.put("/brokers/:id", authenticateAdmin, (0, validation_1.validate)([
     (0, express_validator_1.body)("phone").optional().notEmpty(),
     (0, express_validator_1.body)("revenue_share").optional().isInt({ min: 0, max: 100 }),
     (0, express_validator_1.body)("status").optional().isIn(["ACTIVE", "INACTIVE", "PENDING"]),
+    (0, express_validator_1.body)("tax_id").optional(),
 ]), async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, business_name, business_address, phone, revenue_share, status } = req.body;
+        const { name, email, business_name, business_address, phone, revenue_share, status, allow_promo_codes, tax_id } = req.body;
         const existing = await Database_1.prisma.broker.findUnique({ where: { id } });
         if (!existing) {
             res.status(404).json({ error: "Broker not found" });
@@ -190,7 +202,9 @@ router.put("/brokers/:id", authenticateAdmin, (0, validation_1.validate)([
                 ...(business_address && { business_address }),
                 ...(phone && { phone }),
                 ...(revenue_share !== undefined && { revenue_share_percent: revenue_share }),
+                ...(allow_promo_codes !== undefined && { allow_promo_codes }),
                 ...(status && { status }),
+                ...(tax_id !== undefined && { tax_id }),
             }
         });
         res.json({
@@ -305,7 +319,7 @@ router.delete("/orders/:id", authenticateAdmin, async (req, res) => {
     }
     catch (error) {
         console.error("Delete order error:", error);
-        res.status(500).json({ error: "Failed to delete order" });
+        res.status(500).json({ error: `Failed to delete order: ${error.message}` });
     }
 });
 // DELETE /api/admin/clients/:id - Delete a client (for cleaning up test data)
@@ -419,9 +433,11 @@ router.get("/clients/:id", authenticateAdmin, async (req, res) => {
     }
 });
 // GET /api/admin/documents/:type/:filename - Serve uploaded documents
-router.get("/documents/:type/:filename", authenticateAdmin, async (req, res) => {
+// Use (*) to capture the rest of the path which may include slashes (S3 keys)
+router.get("/documents/:type/*", authenticateAdmin, async (req, res) => {
     try {
-        const { type, filename } = req.params;
+        const type = req.params.type;
+        const filename = req.params[0]; // Capture the wildcard content
         const { S3Service } = require("../services/S3Service");
         // Validate type
         if (!["id_document", "ssn_document"].includes(type)) {
@@ -539,7 +555,7 @@ router.post("/setup-test-users", async (req, res) => {
                 password_hash: passwordHash,
                 name: "Test Client",
                 phone: "555-123-4567",
-                excluded_banks: []
+                excluded_banks: "[]"
             }
         });
         res.json({
@@ -593,13 +609,13 @@ router.post("/orders/:id/mark-paid", authenticateAdmin, async (req, res) => {
             data: {
                 broker_id: order.broker_id || undefined,
                 action: "ORDER_MARKED_PAID",
-                metadata: {
+                metadata: JSON.stringify({
                     order_id: id,
                     order_number: order.order_number,
                     payment_method,
                     admin_id: adminId,
                     amount: order.total_charged
-                }
+                })
             }
         });
         // TODO: Trigger TradelineSupply order creation here

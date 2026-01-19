@@ -6,6 +6,7 @@ const auth_1 = require("../middleware/auth");
 const validation_1 = require("../middleware/validation");
 const PricingEngine_1 = require("../services/PricingEngine");
 const Database_1 = require("../services/Database");
+const EmailService_1 = require("../services/EmailService");
 const router = (0, express_1.Router)();
 const pricingEngine = (0, PricingEngine_1.getPricingEngine)();
 /**
@@ -83,9 +84,9 @@ router.post("/calculate", auth_1.authenticateBroker, (0, validation_1.validate)(
 ]), async (req, res) => {
     try {
         const broker = req.broker;
-        const { items } = req.body;
+        const { items, promo_code } = req.body;
         // Calculate totals
-        const calculation = await pricingEngine.calculateOrderTotal(items, broker.id);
+        const calculation = await pricingEngine.calculateOrderTotal(items, broker.id, broker.allow_promo_codes !== false ? promo_code : undefined);
         res.json({
             success: true,
             calculation: {
@@ -96,7 +97,8 @@ router.post("/calculate", auth_1.authenticateBroker, (0, validation_1.validate)(
                     unit_price: item.customer_price,
                     total: item.customer_price * item.quantity,
                 })),
-                subtotal: calculation.total_customer_price,
+                subtotal: calculation.total_customer_price + (calculation.multi_line_discount || 0),
+                multi_line_discount: calculation.multi_line_discount || 0,
                 total: calculation.total_customer_price,
                 item_count: items.reduce((sum, item) => sum + item.quantity, 0),
             },
@@ -168,7 +170,7 @@ router.post("/track", auth_1.authenticateBroker, (0, validation_1.validate)([
             data: {
                 broker_id: broker.id,
                 action: `WIDGET_${event.toUpperCase()}`,
-                metadata: data,
+                metadata: data ? JSON.stringify(data) : null,
             },
         });
         res.json({ success: true });
@@ -179,6 +181,7 @@ router.post("/track", auth_1.authenticateBroker, (0, validation_1.validate)([
             error: "Failed to track event",
             code: "TRACKING_ERROR",
             message: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
@@ -204,10 +207,11 @@ router.get("/config", auth_1.authenticateBroker, async (req, res) => {
                     enable_cart: true,
                     max_items_per_order: 10,
                     max_quantity_per_item: 3,
+                    allow_promo_codes: broker.allow_promo_codes,
                 },
                 theme: {
-                    primary_color: "#2563eb",
-                    secondary_color: "#64748b",
+                    primary_color: broker.primary_color || "#032530",
+                    secondary_color: broker.secondary_color || "#F4D445",
                     success_color: "#16a34a",
                     error_color: "#dc2626",
                     font_family: "Inter, system-ui, sans-serif",
@@ -244,13 +248,17 @@ router.post("/checkout", auth_1.authenticateBroker, async (req, res) => {
             storage,
             limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
             fileFilter: (_req, file, cb) => {
-                const allowed = /jpeg|jpg|png|gif|pdf/;
-                const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-                const mime = allowed.test(file.mimetype);
-                if (ext && mime)
+                const allowed = /jpeg|jpg|png|gif|pdf|webp|heic|heif/;
+                const ext = path.extname(file.originalname).toLowerCase();
+                // Check if extension matches (ignoring the dot) or contains the string
+                const extValid = allowed.test(ext);
+                const mimeValid = allowed.test(file.mimetype);
+                if (extValid && mimeValid) {
                     cb(null, true);
-                else
-                    cb(new Error("Only images and PDFs allowed"));
+                }
+                else {
+                    cb(new Error(`File type ${file.mimetype} or extension ${ext} not allowed. Only Images (JPG, PNG, HEIC) and PDFs are accepted.`));
+                }
             }
         }).fields([
             { name: "id_document", maxCount: 1 },
@@ -263,7 +271,10 @@ router.post("/checkout", auth_1.authenticateBroker, async (req, res) => {
             }
             try {
                 // Parse form data
-                const { email, name, phone, password, signature, date_of_birth, address } = req.body;
+                let { email, name, phone, password, signature, date_of_birth, address } = req.body;
+                // Normalize email
+                if (email)
+                    email = email.toLowerCase().trim();
                 let items = req.body.items;
                 // Items come as JSON string from FormData
                 if (typeof items === "string") {
@@ -327,13 +338,15 @@ router.post("/checkout", auth_1.authenticateBroker, async (req, res) => {
                 // 2. Create Order (Pending Payment)
                 const { getOrderService } = require("../services/OrderService");
                 const orderService = getOrderService();
+                const { promo_code } = req.body;
                 const order = await orderService.createOrder({
                     broker_id: broker.id,
                     client_id: client.id,
                     customer_email: email,
                     customer_name: name,
                     customer_phone: phone,
-                    items: items
+                    items: items,
+                    promoCode: broker.allow_promo_codes !== false ? promo_code : undefined
                 });
                 // 3. Track Analytics
                 const today = new Date().toISOString().split("T")[0];
@@ -355,10 +368,23 @@ router.post("/checkout", auth_1.authenticateBroker, async (req, res) => {
                         orders_count: 1
                     },
                 });
-                // 4. TODO: Send confirmation email with payment instructions
-                // EmailService.sendOrderConfirmation(client.email, order);
-                // Use the Railway production URL
-                const baseUrl = process.env.PUBLIC_URL || "https://tradeline-marketplace-production-bcaa.up.railway.app";
+                // 4. Send confirmation emails (async, don't block response)
+                const emailService = (0, EmailService_1.getEmailService)();
+                // Send customer order confirmation
+                emailService.sendOrderConfirmation(order).catch((err) => {
+                    console.error("Failed to send order confirmation email:", err.message);
+                });
+                // Send admin notification
+                emailService.sendNewOrderAdminNotification(order).catch((err) => {
+                    console.error("Failed to send admin notification email:", err.message);
+                });
+                // Determine Base URL dynamically
+                let baseUrl = process.env.PUBLIC_URL;
+                if (!baseUrl) {
+                    const protocol = req.protocol;
+                    const host = req.get('host');
+                    baseUrl = `${protocol}://${host}`;
+                }
                 res.json({
                     success: true,
                     order_id: order.id,

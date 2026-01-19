@@ -26,6 +26,9 @@ export interface WidgetConfig {
     errorColor?: string;
     fontFamily?: string;
   };
+  features?: {
+    allow_promo_codes?: boolean;
+  };
   onCheckout?: (items: CartItem[]) => void;
 }
 

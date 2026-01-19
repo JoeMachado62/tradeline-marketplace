@@ -29,12 +29,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://app.creditservicesus.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://app.creditservicesus.com", "https://cdn.jsdelivr.net", "https://myfundalytics.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://myfundalytics.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "https://app.creditservicesus.com", "https://api.zippopotam.us"],
-      frameSrc: ["'self'", "https://app.creditservicesus.com"],
+      connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "https://app.creditservicesus.com", "https://api.zippopotam.us", "https://myfundalytics.com"],
+      frameSrc: ["'self'", "https://app.creditservicesus.com", "https://myfundalytics.com"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     },
@@ -104,53 +104,53 @@ console.log('Admin path:', adminPath);
 console.log('Admin path exists:', fs.existsSync(adminPath));
 
 if (fs.existsSync(adminPath)) {
-    app.use('/admin', express.static(adminPath));
-    app.get('/admin/*', (_req: Request, res: Response) => {
-        res.sendFile(path.join(adminPath, 'index.html'));
-    });
+  app.use('/admin', express.static(adminPath));
+  app.get('/admin/*', (_req: Request, res: Response) => {
+    res.sendFile(path.join(adminPath, 'index.html'));
+  });
 } else {
-    app.get('/admin', (_req: Request, res: Response) => {
-        res.status(503).send('Admin panel not available - dist folder not found at: ' + adminPath);
-    });
+  app.get('/admin', (_req: Request, res: Response) => {
+    res.status(503).send('Admin panel not available - dist folder not found at: ' + adminPath);
+  });
 }
 
 // Client Portal Static Serving
 const portalPath = path.join(__dirname, '../portal-dist');
 if (fs.existsSync(portalPath)) {
-    app.use('/portal/assets', express.static(path.join(portalPath, 'assets')));
-    app.use('/portal', express.static(portalPath));
-    app.get('/portal/*', (_req: Request, res: Response) => {
-        res.sendFile(path.join(portalPath, 'index.html'));
-    });
+  app.use('/portal/assets', express.static(path.join(portalPath, 'assets')));
+  app.use('/portal', express.static(portalPath));
+  app.get('/portal/*', (_req: Request, res: Response) => {
+    res.sendFile(path.join(portalPath, 'index.html'));
+  });
 }
 
 // Broker Portal Static Serving
 const brokerPath = path.join(__dirname, '../broker-dist');
 if (fs.existsSync(brokerPath)) {
-    app.use('/broker-portal/assets', express.static(path.join(brokerPath, 'assets')));
-    app.use('/broker-portal', express.static(brokerPath));
-    app.get('/broker-portal/*', (_req: Request, res: Response) => {
-        res.sendFile(path.join(brokerPath, 'index.html'));
-    });
+  app.use('/broker-portal/assets', express.static(path.join(brokerPath, 'assets')));
+  app.use('/broker-portal', express.static(brokerPath));
+  app.get('/broker-portal/*', (_req: Request, res: Response) => {
+    res.sendFile(path.join(brokerPath, 'index.html'));
+  });
 }
 
 // Widget JavaScript Serving (for external websites)
 const widgetPath = path.join(__dirname, '../widget-dist');
 if (fs.existsSync(widgetPath)) {
-    // Serve widget files with CORS headers so external sites can load them
-    app.use('/widget', (_req: Request, res: Response, next) => {
-        // CORS headers for cross-origin embedding
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-        // Critical: Allow resource to be loaded cross-origin
-        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-        // Cache for 1 hour
-        res.setHeader('Cache-Control', 'no-store');
-        next();
-    }, express.static(widgetPath));
-    
-    console.log('Widget files available at /widget/');
+  // Serve widget files with CORS headers so external sites can load them
+  app.use('/widget', (_req: Request, res: Response, next) => {
+    // CORS headers for cross-origin embedding
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // Critical: Allow resource to be loaded cross-origin
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    // Cache for 1 hour
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  }, express.static(widgetPath));
+
+  console.log('Widget files available at /widget/');
 }
 
 
@@ -194,8 +194,8 @@ const PORT = config.port;
 
 // Only listen if not in test environment
 if (process.env.NODE_ENV !== "test") {
-    app.listen(PORT, () => {
-      console.log(`
+  app.listen(PORT, () => {
+    console.log(`
     🚀 Tradeline Marketplace API Server
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     📡 Environment: ${config.env}
@@ -203,7 +203,7 @@ if (process.env.NODE_ENV !== "test") {
     💰 Commission Model: 50% platform / 10-25% broker share / unlimited broker markup
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       `);
-    });
+  });
 }
 
 export default app;

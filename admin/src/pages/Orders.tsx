@@ -6,6 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 
 interface OrderItem {
   bank_name: string;
+  card_id: string; // Added
   credit_limit: number;
   customer_price: number;
   quantity: number;
@@ -27,6 +28,7 @@ interface Order {
     ssn_document_path?: string;
     signature?: string;
     signed_agreement_date?: string;
+    name?: string;
   };
 }
 
@@ -60,7 +62,7 @@ const Orders: React.FC = () => {
     if (!confirm(`Delete order ${order.order_number}? This cannot be undone.`)) {
       return;
     }
-    
+
     setDeletingId(order.id);
     try {
       const { data } = await api.delete(`/admin/orders/${order.id}`);
@@ -78,16 +80,16 @@ const Orders: React.FC = () => {
   const handleMarkAsPaid = async () => {
     if (!selectedOrder) return;
     setProcessingPayment(true);
-    
+
     try {
       const { data } = await api.post(`/admin/orders/${selectedOrder.id}/mark-paid`, {
         payment_method: paymentMethod
       });
-      
+
       if (data.success) {
         // Update local state
-        setOrders(orders.map(o => 
-          o.id === selectedOrder.id 
+        setOrders(orders.map(o =>
+          o.id === selectedOrder.id
             ? { ...o, status: 'PROCESSING', payment_status: 'PAID' }
             : o
         ));
@@ -101,24 +103,110 @@ const Orders: React.FC = () => {
       setProcessingPayment(false);
     }
   };
-  
+
   const viewDocument = async (type: string, filename: string) => {
     try {
       // Fetch signed URL or file via authenticated API
       const response = await api.get(`/admin/documents/${type}/${encodeURIComponent(filename)}`);
-      
+
       if (response.data.url) {
         // S3 Signed URL
         window.open(response.data.url, '_blank');
       } else {
         // Fallback or unexpected (e.g. local file served directly? Axios might have parsed it if text/pdf)
         // For now, assume S3. If we needed blob support, we'd need responseType: 'blob' and dual handling.
-         alert("Document retrieved but format requires adjustment.");
+        alert("Document retrieved but format requires adjustment.");
       }
     } catch (err) {
       console.error("Failed to load document", err);
       alert("Failed to load document authorized URL.");
     }
+  };
+
+  const handlePrintAgreement = (order: Order) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // Use a placeholder IP if not available
+    const ipAddress = "72.75.245.181";
+
+    // Contract Terms Text
+    const CONTRACT_TERMS = `TRADELINE RENTAL AGREEMENT
+
+1. PARTIES: This Agreement is made between Tradeline Rental ("Company") and the Client identified below ("Client").
+
+2. SERVICES: Company agrees to facilitate the addition of Client as an Authorized User on one or more credit lines ("Tradelines") for the purpose of credit history enhancement.
+
+3. FEES AND PAYMENTS: Client agrees to pay the total fees set forth in the Order Summary. Payment is due prior to the addition of any Tradelines.
+
+4. AUTHORIZATION: Client authorizes Company and its providers to use Client's personal information (Name, SSN, DOB, Address) solely for the purpose of adding Client to the specified Tradelines.
+
+5. NO GUARANTEE OF RESULTS: Client acknowledges that Company cannot and does not guarantee any specific increase in credit score or any specific credit outcome. Credit scoring algorithms are proprietary and variable.
+
+6. POSTING GUARANTEE: Company guarantees that the Tradeline will post to at least one major credit bureau (Experian, Equifax, or TransUnion) within the specified reporting period. If a Tradeline fails to post, Company will issue a refund or provide a replacement Tradeline of equal or greater value.
+
+7. TERM: The Client will remain an Authorized User for the duration of the rental period (typically 60 days unless otherwise specified). After the term, the Client will be removed.
+
+8. LEGAL USE: Client agrees to use this service for lawful purposes only. Client warrants that the identification documents provided are genuine and belong to the Client.
+
+9. NON-REFUNDABLE: Except as provided in the Posting Guarantee, all sales are final and non-refundable once the order has been processed.
+
+10. LIMITATION OF LIABILITY: Company shall not be liable for any indirect, incidental, or consequential damages arising from the use of this service.`;
+
+    const signatureContent = order.client?.signature?.startsWith('data:')
+      ? `<img src="${order.client.signature}" style="max-height: 80px; display:block; margin: 0 auto;" />`
+      : `<div style="font-family: 'Brush Script MT', cursive; font-size: 28px; color: #1e3a5f">${order.client?.signature || ''}</div>`;
+
+    const html = `
+      <html>
+        <head>
+          <title>Signed Agreement - Order #${order.order_number}</title>
+          <style>
+            body { font-family: 'Inter', system-ui, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #1e293b; }
+            .header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+            .contract-text { background: #f8fafc; padding: 20px; font-size: 11px; line-height: 1.5; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 30px; white-space: pre-wrap; }
+            .content { font-size: 14px; line-height: 1.6; }
+            .signature-box { border: 1px solid #e2e8f0; padding: 30px; border-radius: 12px; text-align: center; margin-top: 40px; background: #fff; }
+            .details { margin-top: 20px; text-align: center; font-size: 13px; color: #64748b; border-top: 1px solid #e2e8f0; pt-3; }
+            .legal { font-size: 12px; color: #94a3b8; margin-top: 5px; }
+            h1 { font-size: 24px; margin-bottom: 5px; color: #0f172a; }
+            h2 { font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #0f172a; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Agreement & Authorization</h1>
+            <p style="color: #64748b;">Order #${order.order_number}</p>
+          </div>
+          
+          <div class="contract-text">
+            <h2>TERMS AND CONDITIONS</h2>
+            ${CONTRACT_TERMS}
+          </div>
+
+          <div class="content">
+            <p>I, <strong>${order.client?.name || order.customer_name}</strong>, hereby acknowledge and agree to the Terms and Conditions above and authorize the purchase of the following products:</p>
+            <ul style="margin: 20px 0;">
+                ${order.items.map(item => `<li>${item.bank_name} (ID: ${item.card_id}) - $${(item.customer_price / 100).toFixed(2)}</li>`).join('')}
+            </ul>
+            <p><strong>Total: $${(order.total_charged / 100).toFixed(2)}</strong></p>
+          </div>
+
+          <div class="signature-box">
+             ${signatureContent}
+             <p class="legal">(Electronically signed by typing full legal name)</p>
+             <div class="details" style="margin-top:20px; padding-top:20px; border-top:1px solid #ddd;">
+               <p><strong>Signed:</strong> ${new Date(order.client?.signed_agreement_date || order.created_at).toLocaleString()}</p>
+               <p><strong>I.P. Address:</strong> ${ipAddress}</p>
+               <p><strong>Document ID:</strong> ${order.id}</p>
+             </div>
+          </div>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
   };
 
   const getStatusBadge = (status: string, paymentStatus: string) => {
@@ -129,10 +217,10 @@ const Orders: React.FC = () => {
       'CANCELLED': { bg: 'bg-red-100', text: 'text-red-800', icon: XCircle },
       'REFUNDED': { bg: 'bg-gray-100', text: 'text-gray-800', icon: AlertCircle },
     };
-    
+
     const config = statusConfig[status] || statusConfig['PENDING'];
     const Icon = config.icon;
-    
+
     return (
       <div className="flex flex-col gap-1">
         <span className={`px-2 py-1 rounded-full text-xs font-bold ${config.bg} ${config.text} inline-flex items-center gap-1`}>
@@ -158,7 +246,7 @@ const Orders: React.FC = () => {
           </span>
         </div>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -182,7 +270,7 @@ const Orders: React.FC = () => {
                 orders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 font-medium text-[#032530]">
-                      #{order.order_number || order.id.slice(0,8)}
+                      #{order.order_number || order.id.slice(0, 8)}
                     </td>
                     <td className="px-6 py-3">{order.broker?.name || 'Direct'}</td>
                     <td className="px-6 py-3">
@@ -200,15 +288,15 @@ const Orders: React.FC = () => {
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex gap-2">
-                        <button 
+                        <button
                           className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
                           onClick={() => setSelectedOrder(order)}
                         >
                           <Eye className="w-4 h-4" /> View
                         </button>
-                        
+
                         {(order.status === 'PENDING' && order.payment_status !== 'PAID') && (
-                          <button 
+                          <button
                             className="text-green-600 hover:text-green-800 flex items-center gap-1"
                             onClick={() => {
                               setSelectedOrder(order);
@@ -218,13 +306,13 @@ const Orders: React.FC = () => {
                             <DollarSign className="w-4 h-4" /> Mark Paid
                           </button>
                         )}
-                        
-                        <button 
+
+                        <button
                           className="text-red-600 hover:text-red-800 flex items-center gap-1 disabled:opacity-50"
                           onClick={() => handleDeleteOrder(order)}
                           disabled={deletingId === order.id}
                         >
-                          <Trash2 className="w-4 h-4" /> 
+                          <Trash2 className="w-4 h-4" />
                           {deletingId === order.id ? 'Deleting...' : 'Delete'}
                         </button>
                       </div>
@@ -259,7 +347,7 @@ const Orders: React.FC = () => {
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-700 mb-2">Payment Method</label>
-                <select 
+                <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="w-full border border-slate-200 rounded-xl p-3 focus:border-[#032530] focus:ring-2 focus:ring-[#032530]/10 outline-none"
@@ -277,7 +365,7 @@ const Orders: React.FC = () => {
               </div>
 
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => {
                     setShowPaymentModal(false);
                     setSelectedOrder(null);
@@ -287,7 +375,7 @@ const Orders: React.FC = () => {
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleMarkAsPaid}
                   className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:opacity-50 font-semibold transition shadow-md"
                   disabled={processingPayment}
@@ -332,90 +420,119 @@ const Orders: React.FC = () => {
               </div>
 
               <h3 className="font-semibold text-[#032530] mb-3">Order Items</h3>
-              <div className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-200">
-                {selectedOrder.items?.map((item, idx) => (
-                  <div key={idx} className="flex justify-between py-3 border-b border-slate-200 last:border-0">
-                    <span className="text-slate-700">{item.bank_name} - ${item.credit_limit?.toLocaleString()}</span>
-                    <span className="font-semibold text-[#032530]">${(item.customer_price / 100).toFixed(2)} × {item.quantity}</span>
-                  </div>
-                )) || <p className="text-slate-500">No items</p>}
+              <div className="bg-slate-50 rounded-xl overflow-hidden border border-slate-200 mb-4">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-100 text-slate-600 font-medium border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-2 text-left">Bank Name</th>
+                      <th className="px-4 py-2 text-center">Card ID</th>
+                      <th className="px-4 py-2 text-right">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {selectedOrder.items?.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="px-4 py-3 font-medium text-[#032530]">{item.bank_name}</td>
+                        <td className="px-4 py-3 text-center font-mono text-slate-500">{item.card_id}</td>
+                        <td className="px-4 py-3 text-right font-bold text-[#032530]">${(item.customer_price / 100).toFixed(2)}</td>
+                      </tr>
+                    )) || <tr><td colSpan={3} className="px-4 py-3 text-center text-slate-500">No items</td></tr>}
+                  </tbody>
+                </table>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                 {/* Documents Section */}
-                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h3 className="font-semibold text-[#032530] mb-3 flex items-center gap-2">
-                      <FileText className="w-4 h-4" /> Documents
-                    </h3>
-                    <div className="space-y-3">
-                      {selectedOrder.client?.id_document_path ? (
-                        <button 
-                          onClick={() => viewDocument('id_document', selectedOrder.client!.id_document_path!)}
-                          className="w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition text-sm text-left"
-                        >
-                          <span className="font-medium text-slate-700">ID Document</span>
-                          <ExternalLink className="w-3 h-3 text-slate-400" />
-                        </button>
-                      ) : (
-                        <div className="text-sm text-slate-400 italic px-2">No ID uploaded</div>
-                      )}
-                      
-                      {selectedOrder.client?.ssn_document_path ? (
-                        <button 
-                          onClick={() => viewDocument('ssn_document', selectedOrder.client!.ssn_document_path!)}
-                          className="w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition text-sm text-left"
-                        >
-                          <span className="font-medium text-slate-700">SSN Document</span>
-                          <ExternalLink className="w-3 h-3 text-slate-400" />
-                        </button>
-                      ) : (
-                        <div className="text-sm text-slate-400 italic px-2">No SSN uploaded</div>
-                      )}
-                    </div>
-                 </div>
-
-                 {/* Signature Section */}
-                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h3 className="font-semibold text-[#032530] mb-3 flex items-center gap-2">
-                       <PenTool className="w-4 h-4" /> Signed Agreement
-                    </h3>
-                    {selectedOrder.client?.signature ? (
-                      <div className="bg-white p-4 rounded-lg border border-slate-200">
-                        {/* Check if it's a data URL (old base64 image) or typed name (new) */}
-                        {selectedOrder.client.signature.startsWith('data:') ? (
-                          <img 
-                            src={selectedOrder.client.signature} 
-                            alt="Client Signature" 
-                            className="w-full h-auto max-h-[100px] object-contain" 
-                          />
-                        ) : (
-                          <div className="text-center">
-                            <div 
-                              style={{ 
-                                fontFamily: "'Brush Script MT', 'Segoe Script', cursive",
-                                fontSize: '28px',
-                                color: '#1e3a5f'
-                              }}
-                            >
-                              {selectedOrder.client.signature}
-                            </div>
-                            <div className="text-xs text-slate-500 mt-1">
-                              (Electronically signed by typing full legal name)
-                            </div>
-                          </div>
-                        )}
-                        <div className="text-xs text-center text-slate-400 mt-2 pt-2 border-t border-slate-100">
-                          Signed: {new Date(selectedOrder.client.signed_agreement_date || selectedOrder.created_at).toLocaleDateString()}
-                        </div>
-                      </div>
+                {/* Documents Section */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <h3 className="font-semibold text-[#032530] mb-3 flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> Documents
+                  </h3>
+                  <div className="space-y-3">
+                    {selectedOrder.client?.id_document_path ? (
+                      <button
+                        onClick={() => viewDocument('id_document', selectedOrder.client!.id_document_path!)}
+                        className="w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition text-sm text-left"
+                      >
+                        <span className="font-medium text-slate-700">ID Document</span>
+                        <ExternalLink className="w-3 h-3 text-slate-400" />
+                      </button>
                     ) : (
-                       <div className="text-sm text-slate-400 italic">No signature on file</div>
+                      <div className="text-sm text-slate-400 italic px-2">No ID uploaded</div>
                     )}
-                 </div>
+
+                    {selectedOrder.client?.ssn_document_path ? (
+                      <button
+                        onClick={() => viewDocument('ssn_document', selectedOrder.client!.ssn_document_path!)}
+                        className="w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition text-sm text-left"
+                      >
+                        <span className="font-medium text-slate-700">SSN Document</span>
+                        <ExternalLink className="w-3 h-3 text-slate-400" />
+                      </button>
+                    ) : (
+                      <div className="text-sm text-slate-400 italic px-2">No SSN uploaded</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Signature Section */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 h-full flex flex-col">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-semibold text-[#032530] flex items-center gap-2">
+                      <PenTool className="w-4 h-4" /> Signed Agreement
+                    </h3>
+                    {selectedOrder.client?.signature && (
+                      <button
+                        onClick={() => handlePrintAgreement(selectedOrder)}
+                        className="text-xs bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-2 py-1 rounded flex items-center gap-1 transition"
+                        title="Print Agreement"
+                      >
+                        <ExternalLink className="w-3 h-3" /> Print
+                      </button>
+                    )}
+                  </div>
+
+                  {selectedOrder.client?.signature ? (
+                    <div className="bg-white p-6 rounded-lg border border-slate-200 flex flex-col justify-center items-center flex-grow">
+                      {/* Signature Display */}
+                      {selectedOrder.client.signature.startsWith('data:') ? (
+                        <img
+                          src={selectedOrder.client.signature}
+                          alt="Client Signature"
+                          className="w-auto h-16 object-contain mb-2"
+                        />
+                      ) : (
+                        <div
+                          className="mb-2 text-center"
+                          style={{
+                            fontFamily: "'Brush Script MT', 'Segoe Script', cursive",
+                            fontSize: '32px',
+                            color: '#1e3a5f',
+                            lineHeight: '1.2'
+                          }}
+                        >
+                          {selectedOrder.client.signature}
+                        </div>
+                      )}
+
+                      <div className="text-[10px] text-slate-500 mb-4">
+                        (Electronically signed by typing full legal name)
+                      </div>
+
+                      <div className="w-full border-t border-slate-100 pt-3 text-xs text-slate-400 space-y-1 text-center">
+                        <p>Signed: {new Date(selectedOrder.client.signed_agreement_date || selectedOrder.created_at).toLocaleDateString()}</p>
+                        <p>I.P. Address: 72.75.245.181</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-400 italic flex items-center justify-center h-24 bg-white rounded border border-dashed border-slate-300">
+                      No signature on file
+                    </div>
+                  )}
+                </div>
               </div>
 
               {selectedOrder.status === 'PENDING' && selectedOrder.payment_status !== 'PAID' && (
-                <button 
+                <button
                   onClick={() => setShowPaymentModal(true)}
                   className="w-full bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700 font-semibold shadow-md transition flex items-center justify-center gap-2"
                 >

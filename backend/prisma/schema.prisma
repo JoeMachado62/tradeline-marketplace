@@ -8,10 +8,45 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum BrokerStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  SUSPENDED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentMethod {
+  ACH
+  WIRE
+  STRIPE
+  MANUAL
+  ZELLE
+  CASHAPP
+  VENMO
+  CREDIT_CARD
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+  FAILED
+}
+
 model Broker {
   id                    String             @id @default(uuid())
   name                  String
   business_name         String?
+  tax_id                String?
   email                 String             @unique
   phone                 String?
   business_address      String?
@@ -21,7 +56,10 @@ model Broker {
   revenue_share_percent Float              @default(10)
   markup_type           String             @default("PERCENTAGE")
   markup_value          Float              @default(0)
-  status                String             @default("PENDING")
+  allow_promo_codes     Boolean            @default(true)
+  primary_color         String?            @default("#032530")
+  secondary_color       String?            @default("#F4D445")
+  status                BrokerStatus       @default(PENDING)
   approved_by           String?
   approved_at           DateTime?
   notes                 String?            @db.Text
@@ -46,7 +84,7 @@ model Client {
   phone                 String?
   date_of_birth         DateTime?
   address               String?
-  excluded_banks        String         @default("[]") @db.Text
+  excluded_banks        String?        @db.Text
   id_document_path      String?
   ssn_document_path     String?
   documents_verified    Boolean        @default(false)
@@ -67,7 +105,7 @@ model CreditReport {
   file_path       String
   status          String
   parsed_data     String?  @db.LongText
-  creditors_found String   @default("[]") @db.Text
+  creditors_found String?  @db.Text
   created_at      DateTime @default(now())
   client          Client   @relation(fields: [client_id], references: [id])
 }
@@ -83,7 +121,7 @@ model Order {
   stripe_session_id      String?
   stripe_payment_intent  String?
   payment_status         String             @default("PENDING")
-  payment_method         String             @default("MANUAL")
+  payment_method         PaymentMethod      @default(MANUAL)
   subtotal_base          Int
   broker_revenue_share   Int
   broker_markup          Int
@@ -93,7 +131,7 @@ model Order {
   total_charged          Int
   tradeline_order_id     String?
   tradeline_order_status String?
-  status                 String             @default("PENDING")
+  status                 OrderStatus        @default(PENDING)
   created_at             DateTime           @default(now())
   updated_at             DateTime           @updatedAt
   completed_at           DateTime?
@@ -140,7 +178,7 @@ model CommissionRecord {
   revenue_share_amount Int
   markup_amount        Int
   total_commission     Int
-  payout_status        String    @default("PENDING")
+  payout_status        PayoutStatus @default(PENDING)
   payout_id            String?
   created_at           DateTime  @default(now())
   paid_at              DateTime?
@@ -161,10 +199,10 @@ model Payout {
   total_revenue_share Int
   total_markup        Int
   total_amount        Int
-  payment_method      String             @default("ACH")
+  payment_method      PaymentMethod      @default(ACH)
   payment_details     String?            @db.Text
   transaction_id      String?
-  status              String             @default("PENDING")
+  status              PayoutStatus       @default(PENDING)
   processed_at        DateTime?
   notes               String?            @db.Text
   created_at          DateTime           @default(now())

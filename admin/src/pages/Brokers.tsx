@@ -13,7 +13,9 @@ interface Broker {
   status: 'active' | 'pending' | 'suspended' | 'inactive';
   created_at: string;
   revenue_share_percent: number;
+  allow_promo_codes: boolean;
   api_key: string;
+  tax_id?: string;
 }
 
 export default function Brokers() {
@@ -29,7 +31,8 @@ export default function Brokers() {
     business_address: '',
     phone: '',
     password: '',
-    revenue_share: 10
+    revenue_share: 10,
+    tax_id: ''
   });
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
   const [resetSecret, setResetSecret] = useState<string | null>(null);
@@ -54,7 +57,7 @@ export default function Brokers() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     try {
       const response = await api.post('/admin/brokers', newBroker);
       setBrokers([response.data.broker, ...brokers]);
@@ -65,47 +68,49 @@ export default function Brokers() {
       setError(error.response?.data?.error || 'Failed to create broker');
     }
   };
-  
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingBroker) return;
     setError('');
 
     try {
-        const response = await api.put(`/admin/brokers/${editingBroker.id}`, {
-            name: editingBroker.name,
-            business_name: editingBroker.business_name,
-            business_address: editingBroker.business_address,
-            email: editingBroker.email,
-            phone: editingBroker.phone,
-            revenue_share: editingBroker.revenue_share_percent,
-            status: editingBroker.status.toUpperCase() // API expects uppercase
-        });
-        
-        // Update local list
-        setBrokers(brokers.map(b => b.id === editingBroker.id ? { ...response.data.broker, status: response.data.broker.status.toLowerCase() } : b));
-        setEditingBroker(null);
+      const response = await api.put(`/admin/brokers/${editingBroker.id}`, {
+        name: editingBroker.name,
+        business_name: editingBroker.business_name,
+        business_address: editingBroker.business_address,
+        email: editingBroker.email,
+        phone: editingBroker.phone,
+        revenue_share: editingBroker.revenue_share_percent,
+        allow_promo_codes: editingBroker.allow_promo_codes,
+        status: editingBroker.status.toUpperCase(), // API expects uppercase
+        tax_id: editingBroker.tax_id
+      });
+
+      // Update local list
+      setBrokers(brokers.map(b => b.id === editingBroker.id ? { ...response.data.broker, status: response.data.broker.status.toLowerCase() } : b));
+      setEditingBroker(null);
     } catch (err: unknown) {
-        const error = err as AxiosError<{ error: string }>;
-        setError(error.response?.data?.error || 'Failed to update broker');
+      const error = err as AxiosError<{ error: string }>;
+      setError(error.response?.data?.error || 'Failed to update broker');
     }
   };
 
   const handleResetSecret = async () => {
     if (!showResetConfirm) return;
     try {
-        const response = await api.post(`/admin/brokers/${showResetConfirm.id}/reset-secret`);
-        setResetSecret(response.data.api_secret);
-        // Keep modal open to show secret
+      const response = await api.post(`/admin/brokers/${showResetConfirm.id}/reset-secret`);
+      setResetSecret(response.data.api_secret);
+      // Keep modal open to show secret
     } catch (err: unknown) {
-        const error = err as AxiosError<{ error: string }>;
-        setError(error.response?.data?.error || 'Failed to reset secret');
+      const error = err as AxiosError<{ error: string }>;
+      setError(error.response?.data?.error || 'Failed to reset secret');
     }
   };
 
   const closeCreateModal = () => {
     setShowCreateModal(false);
-    setNewBroker({ name: '', email: '', business_name: '', business_address: '', phone: '', password: '', revenue_share: 10 });
+    setNewBroker({ name: '', email: '', business_name: '', business_address: '', phone: '', password: '', revenue_share: 10, tax_id: '' });
     setCreatedSecret(null);
     setError('');
   };
@@ -114,14 +119,32 @@ export default function Brokers() {
     setShowResetConfirm(null);
     setResetSecret(null);
   };
-  
+
   const getEmbedCode = (apiKey: string) => {
-      return `<script src="${window.location.protocol}//${window.location.hostname}:3002/widget/loader.js" data-api-key="${apiKey}"></script>`;
+    const baseUrl = window.location.origin;
+    return `<!-- Tradeline Widget Styles -->
+<link rel="stylesheet" href="${baseUrl}/widget/tradeline-widget.css">
+
+<!-- Container where widget will render -->
+<div id="tradeline-widget"></div>
+
+<!-- Widget Configuration & Script -->
+<script>
+  window.TL_WIDGET_CONFIG = {
+    apiKey: "${apiKey}",
+    apiUrl: "${baseUrl}/api",
+    theme: {
+      primaryColor: "#032530",
+      secondaryColor: "#F4D445"
+    }
+  };
+</script>
+<script src="${baseUrl}/widget/tradeline-widget.iife.js"></script>`;
   };
 
   const copyToClipboard = (text: string) => {
-      navigator.clipboard.writeText(text);
-      // Could add toast here
+    navigator.clipboard.writeText(text);
+    // Could add toast here
   };
 
   return (
@@ -161,11 +184,12 @@ export default function Brokers() {
                       <div className="text-sm text-gray-500">Joined {new Date(broker.created_at).toLocaleDateString()}</div>
                     </td>
                     <td className="p-4">
-                        <div className="text-gray-900">{broker.business_name}</div>
+                      <div className="text-gray-900">{broker.business_name}</div>
+                      {broker.tax_id && <div className="text-xs text-gray-500">ID: {broker.tax_id}</div>}
                     </td>
                     <td className="p-4">
-                        <div className="text-sm text-gray-900">{broker.email}</div>
-                        <div className="text-sm text-gray-500">{broker.phone}</div>
+                      <div className="text-sm text-gray-900">{broker.email}</div>
+                      <div className="text-sm text-gray-500">{broker.phone}</div>
                     </td>
                     <td className="p-4">
                       <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
@@ -173,23 +197,22 @@ export default function Brokers() {
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        broker.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {broker.status.toUpperCase()}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${broker.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                        {broker.status?.toUpperCase() || 'UNKNOWN'}
                       </span>
                     </td>
                     <td className="p-4">
-                        <div className="flex gap-2">
-                             <button onClick={() => setShowViewModal(broker)} className="text-gray-500 hover:text-[#032530]">
-                                View
-                             </button>
-                             <button onClick={() => setEditingBroker(broker)} className="text-gray-500 hover:text-[#032530]">
-                                Edit
-                             </button>
-                        </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setShowViewModal(broker)} className="text-gray-500 hover:text-[#032530]">
+                          View
+                        </button>
+                        <button onClick={() => setEditingBroker(broker)} className="text-gray-500 hover:text-[#032530]">
+                          Edit
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -211,66 +234,66 @@ export default function Brokers() {
             </div>
             <div className="p-6">
 
-            {createdSecret ? (
+              {createdSecret ? (
                 <div className="space-y-4">
-                    <div className="bg-[#F4D445]/20 border border-[#F4D445] rounded-xl p-4">
-                        <h3 className="text-[#032530] font-bold flex items-center gap-2">
-                            <CheckCircle className="w-5 h-5 text-green-600"/> Broker Created Successfully
-                        </h3>
-                        <p className="text-slate-600 text-sm mt-1">Please copy the API credentials below. The secret key will not be shown again.</p>
-                    </div>
-                    
-                    <div>
-                        <label className="block text-sm font-medium text-[#032530] mb-2">API Secret Key</label>
-                        <div className="flex gap-2">
-                            <input type="text" readOnly value={createdSecret} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-sm" />
-                            <button onClick={() => copyToClipboard(createdSecret)} className="px-4 py-2 bg-[#032530] text-white rounded-lg hover:bg-[#021a22] text-sm font-medium">Copy</button>
-                        </div>
-                    </div>
+                  <div className="bg-[#F4D445]/20 border border-[#F4D445] rounded-xl p-4">
+                    <h3 className="text-[#032530] font-bold flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-600" /> Broker Created Successfully
+                    </h3>
+                    <p className="text-slate-600 text-sm mt-1">Please copy the API credentials below. The secret key will not be shown again.</p>
+                  </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-[#032530] mb-2">Widget Embed Code</label>
-                        <textarea 
-                            readOnly 
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-xs h-24"
-                            value={brokers.find(b => b.email === newBroker.email)?.api_key ? getEmbedCode(brokers.find(b => b.email === newBroker.email)!.api_key) : 'API_KEY'}
-                        />
-                         <p className="text-xs text-slate-500 mt-1">Send this code to the broker to install the widget on their site.</p>
+                  <div>
+                    <label className="block text-sm font-medium text-[#032530] mb-2">API Secret Key</label>
+                    <div className="flex gap-2">
+                      <input type="text" readOnly value={createdSecret} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-sm" />
+                      <button onClick={() => copyToClipboard(createdSecret)} className="px-4 py-2 bg-[#032530] text-white rounded-lg hover:bg-[#021a22] text-sm font-medium">Copy</button>
                     </div>
+                  </div>
 
-                    <button onClick={closeCreateModal} className="w-full bg-[#F4D445] text-[#032530] py-3 rounded-xl hover:bg-[#e5c63d] font-semibold shadow-lg mt-2">
-                        Done
-                    </button>
+                  <div>
+                    <label className="block text-sm font-medium text-[#032530] mb-2">Widget Embed Code</label>
+                    <textarea
+                      readOnly
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-mono text-xs h-24"
+                      value={brokers.find(b => b.email === newBroker.email)?.api_key ? getEmbedCode(brokers.find(b => b.email === newBroker.email)!.api_key) : 'API_KEY'}
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Send this code to the broker to install the widget on their site.</p>
+                  </div>
+
+                  <button onClick={closeCreateModal} className="w-full bg-[#F4D445] text-[#032530] py-3 rounded-xl hover:bg-[#e5c63d] font-semibold shadow-lg mt-2">
+                    Done
+                  </button>
                 </div>
-            ) : (
+              ) : (
                 <form onSubmit={handleCreate} className="space-y-4">
                   {error && (
-                      <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4"/> {error}
-                      </div>
+                    <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" /> {error}
+                    </div>
                   )}
-                  
+
                   <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
-                        <input
-                          type="text"
-                          required
-                          className="w-full border rounded-lg p-2"
-                          value={newBroker.name}
-                          onChange={(e) => setNewBroker({ ...newBroker, name: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
-                          type="email"
-                          required
-                          className="w-full border rounded-lg p-2"
-                          value={newBroker.email}
-                          onChange={(e) => setNewBroker({ ...newBroker, email: e.target.value })}
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full border rounded-lg p-2"
+                        value={newBroker.name}
+                        onChange={(e) => setNewBroker({ ...newBroker, name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        required
+                        className="w-full border rounded-lg p-2"
+                        value={newBroker.email}
+                        onChange={(e) => setNewBroker({ ...newBroker, email: e.target.value })}
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -285,6 +308,16 @@ export default function Brokers() {
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">FEIN# or SSN#</label>
+                    <input
+                      type="text"
+                      className="w-full border rounded-lg p-2"
+                      value={newBroker.tax_id}
+                      onChange={(e) => setNewBroker({ ...newBroker, tax_id: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Business Address</label>
                     <textarea
                       required
@@ -294,30 +327,30 @@ export default function Brokers() {
                       onChange={(e) => setNewBroker({ ...newBroker, business_address: e.target.value })}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                        <input
-                          type="tel"
-                          required
-                          className="w-full border rounded-lg p-2"
-                          value={newBroker.phone}
-                          onChange={(e) => setNewBroker({ ...newBroker, phone: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Initial Password</label>
-                        <input
-                          type="password"
-                          required
-                          minLength={6}
-                          className="w-full border rounded-lg p-2"
-                          placeholder="Min 6 characters"
-                          value={newBroker.password}
-                          onChange={(e) => setNewBroker({ ...newBroker, password: e.target.value })}
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        required
+                        className="w-full border rounded-lg p-2"
+                        value={newBroker.phone}
+                        onChange={(e) => setNewBroker({ ...newBroker, phone: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Initial Password</label>
+                      <input
+                        type="password"
+                        required
+                        minLength={6}
+                        className="w-full border rounded-lg p-2"
+                        placeholder="Min 6 characters"
+                        value={newBroker.password}
+                        onChange={(e) => setNewBroker({ ...newBroker, password: e.target.value })}
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -355,7 +388,7 @@ export default function Brokers() {
           </div>
         </div>
       )}
-      
+
       {/* EDIT MODAL */}
       {editingBroker && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -368,14 +401,14 @@ export default function Brokers() {
             </div>
             <div className="p-6">
 
-            <form onSubmit={handleUpdate} className="space-y-4">
-              {error && (
+              <form onSubmit={handleUpdate} className="space-y-4">
+                {error && (
                   <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4"/> {error}
+                    <AlertCircle className="w-4 h-4" /> {error}
                   </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
                     <input
@@ -394,29 +427,39 @@ export default function Brokers() {
                       onChange={(e) => setEditingBroker({ ...editingBroker, email: e.target.value })}
                     />
                   </div>
-              </div>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Legal Business Name</label>
-                <input
-                  type="text"
-                  className="w-full border rounded-lg p-2"
-                  value={editingBroker.business_name}
-                  onChange={(e) => setEditingBroker({ ...editingBroker, business_name: e.target.value })}
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Legal Business Name</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg p-2"
+                    value={editingBroker.business_name}
+                    onChange={(e) => setEditingBroker({ ...editingBroker, business_name: e.target.value })}
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Business Address</label>
-                <textarea
-                  rows={2}
-                  className="w-full border rounded-lg p-2"
-                  value={editingBroker.business_address || ''}
-                  onChange={(e) => setEditingBroker({ ...editingBroker, business_address: e.target.value })}
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">FEIN# or SSN#</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded-lg p-2"
+                    value={editingBroker.tax_id || ''}
+                    onChange={(e) => setEditingBroker({ ...editingBroker, tax_id: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Business Address</label>
+                  <textarea
+                    rows={2}
+                    className="w-full border rounded-lg p-2"
+                    value={editingBroker.business_address || ''}
+                    onChange={(e) => setEditingBroker({ ...editingBroker, business_address: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                     <input
@@ -428,9 +471,9 @@ export default function Brokers() {
                   </div>
                   <div>
                   </div>
-              </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Revenue Share (%)</label>
                     <input
@@ -443,159 +486,187 @@ export default function Brokers() {
                     />
                   </div>
                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                      <select 
-                          className="w-full border rounded-lg p-2"
-                          value={editingBroker.status}
-                          onChange={(e) => setEditingBroker({...editingBroker, status: e.target.value as Broker['status']})}
-                      >
-                          <option value="active">Active</option>
-                          <option value="pending">Pending</option>
-                          <option value="suspended">Suspended</option>
-                          <option value="inactive">Inactive</option>
-                      </select>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      className="w-full border rounded-lg p-2"
+                      value={editingBroker.status}
+                      onChange={(e) => setEditingBroker({ ...editingBroker, status: e.target.value as Broker['status'] })}
+                    >
+                      <option value="active">Active</option>
+                      <option value="pending">Pending</option>
+                      <option value="suspended">Suspended</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
                   </div>
-              </div>
+                </div>
 
-              <div className="flex justify-end pt-4">
-                <button
-                  type="button"
-                  onClick={() => setEditingBroker(null)}
-                  className="mr-2 px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-[#032530] text-white px-4 py-2 rounded-lg hover:bg-[#021a22]"
-                >
-                  Save Changes
-                </button>
-              </div>
-              
-              <div className="border-t pt-4 mt-2">
-                 <h4 className="text-sm font-bold text-gray-900 mb-2">Danger Zone</h4>
-                 <button 
+                <div className="flex items-center gap-2 mt-4">
+                  <input
+                    type="checkbox"
+                    id="allow_promo_codes"
+                    className="w-4 h-4 text-[#032530] border-gray-300 rounded focus:ring-[#032530]"
+                    checked={editingBroker.allow_promo_codes !== false} // Default to true if undefined
+                    onChange={(e) => setEditingBroker({ ...editingBroker, allow_promo_codes: e.target.checked })}
+                  />
+                  <div>
+                    <label htmlFor="allow_promo_codes" className="text-sm font-medium text-gray-700 block">
+                      Enable Promo Codes
+                    </label>
+                    <p className="text-xs text-gray-500">
+                      If unchecked, the discount banner and coupon field will be hidden on the widget.
+                    </p>
+                  </div>
+                </div>
+
+
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditingBroker(null)}
+                    className="mr-2 px-4 py-2 text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-[#032530] text-white px-4 py-2 rounded-lg hover:bg-[#021a22]"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+
+                <div className="border-t pt-4 mt-2">
+                  <h4 className="text-sm font-bold text-gray-900 mb-2">Danger Zone</h4>
+                  <button
                     type="button"
                     onClick={() => { setEditingBroker(null); setShowResetConfirm(editingBroker); }}
                     className="text-red-600 text-sm hover:underline flex items-center gap-1"
-                 >
-                     <RotateCcw className="w-3 h-3" /> Reset API Secret
-                 </button>
-              </div>
-            </form>
+                  >
+                    <RotateCcw className="w-3 h-3" /> Reset API Secret
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
 
       {/* VIEW DETAILS MODAL */}
-      {showViewModal && (
+      {
+        showViewModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl">
-               <div className="bg-[#032530] px-6 py-4 flex justify-between items-start">
-                 <div>
-                    <h2 className="text-xl font-bold text-white">{showViewModal.business_name}</h2>
-                    <p className="text-white/60 text-sm">Created on {new Date(showViewModal.created_at).toLocaleDateString()}</p>
-                 </div>
-                 <button onClick={() => setShowViewModal(null)} className="text-white/70 hover:text-white transition-colors">
-                   <XCircle className="w-6 h-6" />
-                 </button>
-               </div>
-               <div className="p-6">
-               
-               <div className="space-y-4">
-                   <div className="grid grid-cols-2 gap-4 text-sm">
-                       <div>
-                           <span className="block text-gray-500">Contact Person</span>
-                           <span className="font-medium">{showViewModal.name}</span>
-                       </div>
-                       <div>
-                           <span className="block text-gray-500">Status</span>
-                           <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                                showViewModal.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                           }`}>
-                               {showViewModal.status.toUpperCase()}
-                           </span>
-                       </div>
-                       <div>
-                           <span className="block text-gray-500">Email</span>
-                           <span className="font-medium">{showViewModal.email}</span>
-                       </div>
-                       <div>
-                           <span className="block text-gray-500">Phone</span>
-                           <span className="font-medium">{showViewModal.phone || 'N/A'}</span>
-                       </div>
-                       <div className="col-span-2">
-                           <span className="block text-gray-500">Address</span>
-                           <span className="font-medium whitespace-pre-wrap">{showViewModal.business_address || 'N/A'}</span>
-                       </div>
-                   </div>
-                   
-                   <div className="bg-[#032530]/5 p-4 rounded-xl border border-[#032530]/10">
-                        <h4 className="text-xs font-bold text-[#032530] uppercase mb-3">Integration Details</h4>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-xs text-slate-500 mb-1 block">API Key</label>
-                                <div className="flex gap-2">
-                                    <code className="text-xs bg-white border border-slate-200 p-2 rounded-lg block w-full font-mono">{showViewModal.api_key}</code>
-                                    <button onClick={() => copyToClipboard(showViewModal.api_key)} className="text-xs bg-[#032530] text-white px-3 rounded-lg hover:bg-[#021a22]">Copy</button>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500 mb-1 block">Embed Code</label>
-                                <div className="relative">
-                                   <textarea readOnly className="w-full text-xs font-mono p-2 border border-slate-200 rounded-lg bg-white h-16" value={getEmbedCode(showViewModal.api_key)} />
-                                   <button onClick={() => copyToClipboard(getEmbedCode(showViewModal.api_key))} className="absolute top-1 right-1 text-xs bg-[#032530] text-white px-2 py-1 rounded hover:bg-[#021a22]">Copy</button>
-                                </div>
-                            </div>
-                        </div>
+              <div className="bg-[#032530] px-6 py-4 flex justify-between items-start">
+                <div>
+                  <h2 className="text-xl font-bold text-white">{showViewModal.business_name}</h2>
+                  <p className="text-white/60 text-sm">Created on {new Date(showViewModal.created_at).toLocaleDateString()}</p>
+                </div>
+                <button onClick={() => setShowViewModal(null)} className="text-white/70 hover:text-white transition-colors">
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6">
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="block text-gray-500">Contact Person</span>
+                      <span className="font-medium">{showViewModal.name}</span>
                     </div>
+                    <div>
+                      <span className="block text-gray-500">Status</span>
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${showViewModal.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                        {showViewModal.status?.toUpperCase() || 'UNKNOWN'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500">Email</span>
+                      <span className="font-medium">{showViewModal.email}</span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500">Phone</span>
+                      <span className="font-medium">{showViewModal.phone || 'N/A'}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="block text-gray-500">Address</span>
+                      <span className="font-medium whitespace-pre-wrap">{showViewModal.business_address || 'N/A'}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="block text-gray-500">FEIN# / SSN#</span>
+                      <span className="font-medium">{showViewModal.tax_id || 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#032530]/5 p-4 rounded-xl border border-[#032530]/10">
+                    <h4 className="text-xs font-bold text-[#032530] uppercase mb-3">Integration Details</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-slate-500 mb-1 block">API Key</label>
+                        <div className="flex gap-2">
+                          <code className="text-xs bg-white border border-slate-200 p-2 rounded-lg block w-full font-mono">{showViewModal.api_key}</code>
+                          <button onClick={() => copyToClipboard(showViewModal.api_key)} className="text-xs bg-[#032530] text-white px-3 rounded-lg hover:bg-[#021a22]">Copy</button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-500 mb-1 block">Embed Code</label>
+                        <div className="relative">
+                          <textarea readOnly className="w-full text-xs font-mono p-2 border border-slate-200 rounded-lg bg-white h-24" value={getEmbedCode(showViewModal.api_key)} />
+                          <button onClick={() => copyToClipboard(getEmbedCode(showViewModal.api_key))} className="absolute top-1 right-1 text-xs bg-[#032530] text-white px-2 py-1 rounded hover:bg-[#021a22]">Copy</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
+
                 <div className="mt-6 flex justify-end">
-                    <button onClick={() => setShowViewModal(null)} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-medium">Close</button>
+                  <button onClick={() => setShowViewModal(null)} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-medium">Close</button>
                 </div>
-             </div>
-           </div>
-         </div>
-      )}
+              </div>
+            </div>
+          </div>
+        )
+      }
 
       {/* RESET CONFIRMATION MODAL */}
-      {showResetConfirm && (
+      {
+        showResetConfirm && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
-                  {resetSecret ? (
-                      <div className="p-6 text-center">
-                          <div className="mx-auto w-14 h-14 bg-[#F4D445]/20 rounded-full flex items-center justify-center mb-4">
-                              <CheckCircle className="w-7 h-7 text-green-600" />
-                          </div>
-                          <h3 className="text-lg font-bold text-[#032530] mb-2">Secret Reset Successful</h3>
-                          <p className="text-sm text-slate-600 mb-4">Here is the new API Secret. Copy it now, it won't be shown again.</p>
-                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 break-all font-mono text-sm text-center select-all">
-                              {resetSecret}
-                          </div>
-                          <button onClick={closeResetModal} className="w-full bg-[#F4D445] text-[#032530] py-3 rounded-xl font-semibold hover:bg-[#e5c63d] shadow-lg">Done</button>
-                      </div>
-                  ) : (
-                      <div className="p-6 text-center">
-                          <div className="mx-auto w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                              <AlertCircle className="w-7 h-7 text-red-600" />
-                          </div>
-                          <h3 className="text-lg font-bold text-[#032530] mb-2">Reset API Secret?</h3>
-                          <p className="text-sm text-slate-600 mb-6">
-                              Are you sure you want to generate a new API Secret for <strong className="text-[#032530]">{showResetConfirm.name}</strong>? 
-                              The old secret will stop working immediately, which may break their live widget.
-                          </p>
-                          <div className="flex gap-3">
-                              <button onClick={() => setShowResetConfirm(null)} className="flex-1 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 font-medium text-slate-700">Cancel</button>
-                              <button onClick={handleResetSecret} className="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium">Yes, Reset</button>
-                          </div>
-                      </div>
-                  )}
-              </div>
+            <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
+              {resetSecret ? (
+                <div className="p-6 text-center">
+                  <div className="mx-auto w-14 h-14 bg-[#F4D445]/20 rounded-full flex items-center justify-center mb-4">
+                    <CheckCircle className="w-7 h-7 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#032530] mb-2">Secret Reset Successful</h3>
+                  <p className="text-sm text-slate-600 mb-4">Here is the new API Secret. Copy it now, it won't be shown again.</p>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 break-all font-mono text-sm text-center select-all">
+                    {resetSecret}
+                  </div>
+                  <button onClick={closeResetModal} className="w-full bg-[#F4D445] text-[#032530] py-3 rounded-xl font-semibold hover:bg-[#e5c63d] shadow-lg">Done</button>
+                </div>
+              ) : (
+                <div className="p-6 text-center">
+                  <div className="mx-auto w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <AlertCircle className="w-7 h-7 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#032530] mb-2">Reset API Secret?</h3>
+                  <p className="text-sm text-slate-600 mb-6">
+                    Are you sure you want to generate a new API Secret for <strong className="text-[#032530]">{showResetConfirm.name}</strong>?
+                    The old secret will stop working immediately, which may break their live widget.
+                  </p>
+                  <div className="flex gap-3">
+                    <button onClick={() => setShowResetConfirm(null)} className="flex-1 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 font-medium text-slate-700">Cancel</button>
+                    <button onClick={handleResetSecret} className="flex-1 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium">Yes, Reset</button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

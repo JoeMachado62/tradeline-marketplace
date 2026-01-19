@@ -26,7 +26,19 @@ app.set("layout extractStyles", true);
 app.set('trust proxy', 1);
 // Security middleware
 app.use((0, helmet_1.default)({
-    contentSecurityPolicy: false, // Required for external widget and scripts
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com", "https://app.creditservicesus.com", "https://cdn.jsdelivr.net", "https://myfundalytics.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://myfundalytics.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*", "https://app.creditservicesus.com", "https://api.zippopotam.us", "https://myfundalytics.com"],
+            frameSrc: ["'self'", "https://app.creditservicesus.com", "https://myfundalytics.com"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
     crossOriginEmbedderPolicy: false
 }));
 app.use((0, cors_1.default)({
@@ -65,6 +77,8 @@ app.use("/api/orders", orders_1.default);
 app.use("/api/payouts", payouts_1.default);
 app.use("/api/clients", clients_1.default);
 app.use("/api/portal", portal_1.default);
+const lux_1 = __importDefault(require("./routes/lux"));
+app.use("/api/lux", lux_1.default);
 const broker_portal_1 = __importDefault(require("./routes/broker-portal"));
 app.use("/api/portal/broker", broker_portal_1.default);
 app.use("/api/payments/webhook", webhook_1.default);
@@ -115,7 +129,7 @@ if (fs_1.default.existsSync(widgetPath)) {
         // Critical: Allow resource to be loaded cross-origin
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         // Cache for 1 hour
-        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.setHeader('Cache-Control', 'no-store');
         next();
     }, express_1.default.static(widgetPath));
     console.log('Widget files available at /widget/');

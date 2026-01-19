@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+dotenv_1.default.config({ path: '.env.local', override: true });
 exports.config = {
     env: process.env.NODE_ENV || "development",
     port: parseInt(process.env.PORT || "3000", 10),
@@ -56,6 +57,15 @@ exports.config = {
         corsOrigin: process.env.CORS_ORIGIN || "*",
         rateLimitWindow: 15 * 60 * 1000, // 15 minutes
         rateLimitMax: 100, // requests per window
+    },
+    // Email
+    email: {
+        host: process.env.EMAIL_HOST || "smtp.sendgrid.net",
+        port: parseInt(process.env.EMAIL_PORT || "587", 10),
+        user: process.env.EMAIL_USERNAME || "apikey",
+        password: process.env.EMAIL_PASSWORD || "",
+        from: process.env.EMAIL_FROM || "support@tradelinerental.com",
+        adminEmail: process.env.ADMIN_EMAIL || "joe@ezwai.com",
     },
 };
 // Validate required environment variables

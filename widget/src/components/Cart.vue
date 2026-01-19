@@ -61,11 +61,11 @@
         </div>
 
         <div class="tl-cart-footer">
-          <div v-if="store.cartItemCount >= 2 && store.promoCode !== '10-30OFF'" class="tl-discount-badge">
+        <div v-if="store.cartItemCount >= 2 && store.promoCode !== '10-30OFF' && showPromoCodeFunc" class="tl-discount-badge">
             🎁 Add 2+ lines? Use code "10-30OFF" for Package Discounts!
           </div>
 
-          <div class="tl-promo-group">
+          <div class="tl-promo-group" v-if="showPromoCodeFunc">
             <input 
               v-model="store.promoCode" 
               class="tl-promo-input" 
@@ -246,7 +246,7 @@
                 <h4>TRADELINE USER AGREEMENT</h4>
                 
                 <h5 style="color: #1e3a5f; margin: 20px 0 8px 0; font-size: 13px; text-transform: uppercase;">PARTIES</h5>
-                <p>This agreement is between Credit Services US, LLC, dba TradeLineRental.com (hereinafter "TLR") and the undersigned client (hereinafter "Client"). By signing this agreement, Client certifies that he/she is at least 18 years of age, that the information he/she has provided to TLR is true and complete, that he/she is legally authorized to enter into this agreement, and that he/she will not use any of the products of TLR for any unlawful or deceptive purpose.</p>
+                <p>This agreement is between Credit Services US, LLC 1479 SW 18 TERR FORT LAUDERDALE, FL 33312 (hereinafter "TLR") and the undersigned client (hereinafter "Client"). By signing this agreement, Client certifies that he/she is at least 18 years of age, that the information he/she has provided to TLR is true and complete, that he/she is legally authorized to enter into this agreement, and that he/she will not use any of the products of TLR for any unlawful or deceptive purpose.</p>
 
                 <h5 style="color: #1e3a5f; margin: 20px 0 8px 0; font-size: 13px; text-transform: uppercase;">DEFINITION OF TRADELINE</h5>
                 <p>The term "tradeline" refers to the line-item for a credit account on a credit bureau report. Client will be added as an "Authorized User" onto the purchased line of credit, resulting in the tradeline also appearing on Client's credit bureau report.</p>
@@ -373,6 +373,15 @@ const store = useWidgetStore();
 const currentView = ref<'cart' | 'checkout'>('cart');
 const checkoutStep = ref(1);
 const showPassword = ref(false);
+
+// Promo Code Visibility Logic
+const showPromoCodeFunc = computed(() => {
+  // Check explicit feature flag from config
+  const features = store.config?.features;
+  // If undefined, default to true (backward compatibility), otherwise use the flag
+  // The backend sends 'allow_promo_codes', so we check exactly that.
+  return features?.allow_promo_codes !== false;
+});
 
 // Files & Typed Signature
 const idDocument = ref<File | null>(null);

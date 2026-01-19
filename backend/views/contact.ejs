@@ -1,121 +1,224 @@
 <%- contentFor('html_attribute') %>
 
-<%- contentFor('body_attribute') %>
+  <%- contentFor('body_attribute') %>
 
-<%- contentFor('extra_css') %>
+    <%- contentFor('extra_css') %>
+      <style>
+        .homepage3-body .vl-transparent-header .row-bg {
+          background: rgba(0, 0, 0, 0.3) !important;
+          border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+      </style>
 
-<%- contentFor('content') %>
-  <%- include('partials/header/navbar3') %>
-  <!-- ===== HERO AREA STARTS ======= -->
-  <div class="inner-pages-section-area" style="background-image: url(/img/all-images/bg/hero-bg1.png); background-position: center; background-repeat: no-repeat; background-size: cover;">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-12 m-auto">
-          <div class="inner-header text-center">
-            <h2 class="text-anime-style-3">Contact Us</h2>
-            <div class="space24"></div>
-            <a href="/">Home <i class="fa-solid fa-angle-right"></i> <span>Contact Us</span></a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== HERO AREA ENDS ======= -->
+      <%- contentFor('content') %>
+        <%- include('partials/header/navbar3') %>
+          <!-- ===== HERO AREA STARTS ======= -->
+          <div class="inner-pages-section-area"
+            style="background-image: url(/img/all-images/bg/hero-bg1.png); background-position: center; background-repeat: no-repeat; background-size: cover;">
+            <div class="container">
+              <div class="row">
+                <div class="col-lg-12 m-auto">
+                  <div class="inner-header text-center">
+                    <h2 class="text-anime-style-3">Contact Us</h2>
+                    <div class="space24"></div>
 
-  <!-- ===== CONTACT AREA STARTS ======= -->
-  <div class="contact-inner-area sp2">
-    <div class="container">
-      <div class="row align-items-center">
-        <div class="col-lg-6">
-          <div class="contact-header-area heading1">
-            <h5>CONTACT US</h5>
-            <div class="space16"></div>
-            <h2 class="text-anime-style-3">Your Success Starts with a Conversation</h2>
-            <div class="space16"></div>
-            <p>We believe that informed clients make better financial decisions. Whether you have questions about specific tradelines or our broker program, our team is here to help you navigate your credit journey.</p>
-            <div class="row">
-              <div class="col-lg-6">
-                <div class="input-area">
-                  <input type="text" placeholder="First Name*" required />
-                </div>
-              </div>
-
-              <div class="col-lg-6">
-                <div class="input-area">
-                  <input type="text" placeholder="Last Name*" required />
-                </div>
-              </div>
-
-              <div class="col-lg-6">
-                <div class="input-area">
-                  <input type="email" placeholder="Email Address*" required />
-                </div>
-              </div>
-              <div class="col-lg-6">
-                <div class="input-area">
-                  <input type="text" placeholder="Phone Number*" required />
-                </div>
-              </div>
-
-              <div class="col-lg-12">
-                <div class="input-area">
-                  <input type="text" placeholder="Subject*" required />
-                </div>
-              </div>
-
-              <div class="col-lg-12">
-                <div class="input-area">
-                  <textarea placeholder="How can we help you?*" required></textarea>
-                </div>
-              </div>
-
-              <div class="col-lg-12">
-                <div class="space16"></div>
-                <div class="input-area">
-                  <button type="submit" class="vl-btn1">SEND MESSAGE</button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="col-lg-6">
-           <div class="contact-author-boxarea" style="background: #032530; padding: 40px; border-radius: 12px; color: #fff;">
-              <div class="text">
-                <h3 style="color: #fff;">Get in Touch</h3>
-                <p style="color: #fff; opacity: 0.8;">Have a question? We're here to help.</p>
-                <div class="space32"></div>
-                <div class="contact-info-item d-flex align-items-center mb-4">
-                  <div class="icon me-3">
-                    <img src="/img/icons/email1.svg" alt="" style="filter: brightness(0) invert(1);">
-                  </div>
-                  <div>
-                    <span class="d-block" style="opacity: 0.7;">Email Us</span>
-                    <a href="mailto:support@tradelinerental.com" style="color: #fff; font-weight: 600;">support@tradelinerental.com</a>
+          <!-- ===== HERO AREA ENDS ======= -->
+
+          <!-- ===== CONTACT AREA STARTS ======= -->
+          <div class="contact-inner-area sp2">
+            <div class="container">
+              <div class="row align-items-center">
+                <div class="col-lg-6">
+                  <div class="contact-header-area heading1">
+                    <h5>CONTACT US</h5>
+                    <div class="space16"></div>
+                    <h2 class="text-anime-style-3">Your Success Starts with a Conversation</h2>
+                    <div class="space16"></div>
+                    <p>We believe that informed clients make better financial decisions. Whether you have questions
+                      about specific tradelines or our broker program, our team is here to help you navigate your credit
+                      journey.</p>
+                    <div class="row">
+                      <div class="col-lg-6">
+                        <div class="input-area">
+                          <input type="text" id="firstName" placeholder="First Name*" required />
+                        </div>
+                      </div>
+
+                      <div class="col-lg-6">
+                        <div class="input-area">
+                          <input type="text" id="lastName" placeholder="Last Name*" required />
+                        </div>
+                      </div>
+
+                      <div class="col-lg-6">
+                        <div class="input-area">
+                          <input type="email" id="email" placeholder="Email Address*" required />
+                        </div>
+                      </div>
+                      <div class="col-lg-6">
+                        <div class="input-area">
+                          <input type="text" id="phone" placeholder="Phone Number*" required />
+                        </div>
+                      </div>
+
+                      <div class="col-lg-12">
+                        <div class="input-area">
+                          <input type="text" id="subject" placeholder="Subject*" required />
+                        </div>
+                      </div>
+
+                      <div class="col-lg-12">
+                        <div class="input-area">
+                          <textarea id="message" placeholder="How can we help you?*" required></textarea>
+                        </div>
+                      </div>
+
+                      <div class="col-lg-12">
+                        <div class="space16"></div>
+                        <div class="input-area">
+                          <button type="button" id="submitContact" class="vl-btn1">SEND MESSAGE</button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div class="contact-info-item d-flex align-items-center mb-4">
-                  <div class="icon me-3">
-                    <img src="/img/icons/phn1.svg" alt="" style="filter: brightness(0) invert(1);">
-                  </div>
-                  <div>
-                    <span class="d-block" style="opacity: 0.7;">Broker Support</span>
-                    <a href="/broker-portal" style="color: #fff; font-weight: 600;">Contact through Portal</a>
-                  </div>
-                </div>
-                <div class="contact-info-item d-flex align-items-center mb-4">
-                  <div class="icon me-3">
-                    <img src="/img/icons/location1.svg" alt="" style="filter: brightness(0) invert(1);">
-                  </div>
-                  <div>
-                    <span class="d-block" style="opacity: 0.7;">Main Office</span>
-                    <address style="color: #fff; font-weight: 600; margin-bottom: 0;">17880 S DIXIE HWY, MIAMI, FL 33157</address>
+                <div class="col-lg-6">
+                  <div class="contact-author-boxarea"
+                    style="background: #032530; padding: 40px; border-radius: 12px; color: #fff;">
+                    <div class="text">
+                      <h3 style="color: #fff;">Get in Touch</h3>
+                      <p style="color: #fff; opacity: 0.8;">Have a question? We're here to help.</p>
+                      <div class="space32"></div>
+                      <div class="contact-info-item d-flex align-items-center mb-4">
+                        <div class="icon me-3">
+                          <img src="/img/icons/email1.svg" alt="" style="filter: brightness(0) invert(1);">
+                        </div>
+                        <div>
+                          <span class="d-block" style="opacity: 0.7;">Email Us</span>
+                          <a href="mailto:support@tradelinerental.com"
+                            style="color: #fff; font-weight: 600;">support@tradelinerental.com</a>
+                        </div>
+                      </div>
+                      <div class="contact-info-item d-flex align-items-center mb-4">
+                        <div class="icon me-3">
+                          <img src="/img/icons/phn1.svg" alt="" style="filter: brightness(0) invert(1);">
+                        </div>
+                        <div>
+                          <span class="d-block" style="opacity: 0.7;">Phone or Text</span>
+                          <a href="tel:8338923863" style="color: #fff; font-weight: 600;">833-892-FUND</a>
+                        </div>
+                      </div>
+                      <div class="contact-info-item d-flex align-items-center mb-4">
+                        <div class="icon me-3">
+                          <img src="/img/icons/phn1.svg" alt="" style="filter: brightness(0) invert(1);">
+                        </div>
+                        <div>
+                          <span class="d-block" style="opacity: 0.7;">Broker Support</span>
+                          <a href="/broker-portal" style="color: #fff; font-weight: 600;">Contact through Portal</a>
+                        </div>
+                      </div>
+                      <div class="contact-info-item d-flex align-items-center mb-4">
+                        <div class="icon me-3">
+                          <img src="/img/icons/location1.svg" alt="" style="filter: brightness(0) invert(1);">
+                        </div>
+                        <div>
+                          <span class="d-block" style="opacity: 0.7;">Main Office</span>
+                          <address style="color: #fff; font-weight: 600; margin-bottom: 0;">17880 S DIXIE HWY, MIAMI, FL
+                            33157</address>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ===== CONTACT AREA ENDS ======= -->
-<%- contentFor('extra_javascript') %>
+            </div>
+          </div>
+          <!-- ===== CONTACT AREA ENDS ======= -->
+          <%- contentFor('extra_javascript') %>
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <script>
+              document.getElementById('submitContact').addEventListener('click', async function (e) {
+                e.preventDefault();
+
+                const btn = this;
+                const originalText = btn.innerText;
+
+                // Get values
+                const firstName = document.getElementById('firstName').value;
+                const lastName = document.getElementById('lastName').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const subject = document.getElementById('subject').value;
+                const message = document.getElementById('message').value;
+
+                // Validation
+                if (!firstName || !lastName || !email || !phone || !subject || !message) {
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Information',
+                    text: 'Please fill in all fields.',
+                    confirmButtonColor: '#032530'
+                  });
+                  return;
+                }
+
+                // Loading state
+                btn.innerText = 'SENDING...';
+                btn.disabled = true;
+
+                try {
+                  const response = await fetch('/contact-submission', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      firstName,
+                      lastName,
+                      email,
+                      phone,
+                      subject,
+                      message
+                    })
+                  });
+
+                  const result = await response.json();
+
+                  if (response.ok && result.success) {
+                    // Success Modal
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Message Sent!',
+                      text: 'Thank you for contacting us. We will get back to you shortly.',
+                      confirmButtonColor: '#032530'
+                    }).then(() => {
+                      // Clear form
+                      document.getElementById('firstName').value = '';
+                      document.getElementById('lastName').value = '';
+                      document.getElementById('email').value = '';
+                      document.getElementById('phone').value = '';
+                      document.getElementById('subject').value = '';
+                      document.getElementById('message').value = '';
+                    });
+                  } else {
+                    throw new Error(result.error || 'Failed to send message');
+                  }
+                } catch (error) {
+                  console.error(error);
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Something went wrong. Please try again later.',
+                    confirmButtonColor: '#032530'
+                  });
+                } finally {
+                  btn.innerText = originalText;
+                  btn.disabled = false;
+                }
+              });
+            </script>

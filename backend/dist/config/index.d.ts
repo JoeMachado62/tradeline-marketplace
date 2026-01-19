@@ -40,5 +40,13 @@ export declare const config: {
         rateLimitWindow: number;
         rateLimitMax: number;
     };
+    email: {
+        host: string;
+        port: number;
+        user: string;
+        password: string;
+        from: string;
+        adminEmail: string;
+    };
 };
 //# sourceMappingURL=index.d.ts.map
